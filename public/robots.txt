@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /$
+Allow: /login$
+Disallow: /
+
+Sitemap: https://app.amoremio.com.br/sitemap.xml

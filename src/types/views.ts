@@ -1,0 +1,15 @@
+export type ActiveView =
+  | "dashboard"
+  | "products"
+  | "brands"
+  | "suppliers"
+  | "recipes"
+  | "inventory"
+  | "purchases"
+  | "production"
+  | "sales"
+  | "users"
+  | "stores"
+  | "profile"
+  | "settings"
+  | "termsOfUse";

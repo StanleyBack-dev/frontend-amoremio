@@ -1,0 +1,114 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: #20100f;
+    color: #33231f;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-family:
+      Inter, "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial,
+      sans-serif;
+    font-size: 14px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  ::selection {
+    background: rgba(185, 140, 66, 0.28);
+    color: #3d2420;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 600;
+  }
+}
+
+/* Sidebar scroll track blends into the dark chrome. */
+.sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #4a2b31 transparent;
+}
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #4a2b31;
+  border-radius: 9999px;
+}
+
+/* Light content scrollbars. */
+.content-scroll,
+main {
+  scrollbar-width: thin;
+  scrollbar-color: #d8cabb transparent;
+}
+main::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+main::-webkit-scrollbar-thumb {
+  background: #d8cabb;
+  border-radius: 9999px;
+}
+
+/* Filter bars use the dark chrome colour; recolour the field labels inside
+ * them so they stay readable against it. */
+.filter-panel label {
+  color: rgba(243, 228, 206, 0.72) !important;
+}
+
+/*
+ * Autofilled inputs sit on the light field surface. Force the light
+ * treatment (Chrome's :-webkit-autofill overrides inline styles).
+ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: #33231f !important;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  caret-color: #33231f !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+input:disabled:-webkit-autofill,
+select:disabled:-webkit-autofill,
+textarea:disabled:-webkit-autofill {
+  -webkit-text-fill-color: #9c877e !important;
+  -webkit-box-shadow: 0 0 0 1000px #f1ebe3 inset !important;
+  box-shadow: 0 0 0 1000px #f1ebe3 inset !important;
+}
+
+input,
+select,
+textarea {
+  color-scheme: light;
+}
