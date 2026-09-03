@@ -10,6 +10,7 @@ import Button from "@atoms/Button";
 import Input from "@atoms/Input";
 import Select from "@atoms/Select";
 import SectionCard from "@/components/organisms/SectionCard";
+import Drawer from "@/components/organisms/Drawer";
 import ContactField from "@/components/molecules/ContactField";
 import { useToast } from "@/shared/toast/useToast";
 import { useStoreContext } from "@/features/stores";
@@ -118,6 +119,7 @@ export default function Stores() {
 
   const [newStoreName, setNewStoreName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
 
   const [form, setForm] = useState<StoreForm>(EMPTY_FORM);
   const [savedForm, setSavedForm] = useState<StoreForm>(EMPTY_FORM);
@@ -184,6 +186,16 @@ export default function Stores() {
       .catch(() => setUsers([]));
   }, [canManage]);
 
+  function openCreateDrawer() {
+    setNewStoreName("");
+    setCreateDrawerOpen(true);
+  }
+
+  function closeCreateDrawer() {
+    setCreateDrawerOpen(false);
+    setNewStoreName("");
+  }
+
   async function handleCreate() {
     const name = newStoreName.trim();
     if (!name) return;
@@ -191,7 +203,7 @@ export default function Stores() {
     try {
       const store = await createStore({ name });
       showSuccess("Loja criada", `"${store.name}" foi criada.`);
-      setNewStoreName("");
+      closeCreateDrawer();
       await reloadStores();
       setActiveStore(store.idStore);
     } catch (error) {
@@ -299,7 +311,14 @@ export default function Stores() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SectionCard title="Loja ativa">
+      <SectionCard
+        title="Loja ativa"
+        action={
+          <Button variant="primary" onClick={openCreateDrawer}>
+            Nova loja
+          </Button>
+        }
+      >
         {stores.length === 0 ? (
           <p className="text-[13px] text-ink-muted">
             Você ainda não faz parte de nenhuma loja.
@@ -328,6 +347,8 @@ export default function Stores() {
               ? "Identificação da loja e canais de atendimento. Use os botões ao lado de cada campo para copiar ou abrir."
               : "Apenas o DONO pode alterar os dados e os membros da loja."
           }
+          collapsible
+          defaultOpen={false}
         >
           <div className="flex flex-col gap-6">
             <fieldset className="flex flex-col gap-4">
@@ -445,28 +466,34 @@ export default function Stores() {
         </SectionCard>
       )}
 
-      <SectionCard
+      <Drawer
+        open={createDrawerOpen}
+        onClose={closeCreateDrawer}
         title="Nova loja"
-        description="Cria uma loja e define você como DONO."
+        subtitle="Cria uma loja e define você como DONO."
+        footer={
+          <>
+            <Button variant="outline" onClick={closeCreateDrawer}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              loading={creating}
+              disabled={creating || !newStoreName.trim()}
+              onClick={handleCreate}
+            >
+              Criar loja
+            </Button>
+          </>
+        }
       >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <Input
-            label="Nome da loja"
-            value={newStoreName}
-            onChange={(e) => setNewStoreName(e.target.value)}
-            placeholder="Ex.: Amore Mio Centro"
-            wrapperClassName="flex-1"
-          />
-          <Button
-            variant="primary"
-            loading={creating}
-            disabled={creating || !newStoreName.trim()}
-            onClick={handleCreate}
-          >
-            Criar loja
-          </Button>
-        </div>
-      </SectionCard>
+        <Input
+          label="Nome da loja"
+          value={newStoreName}
+          onChange={(e) => setNewStoreName(e.target.value)}
+          placeholder="Ex.: Amore Mio Centro"
+        />
+      </Drawer>
 
       {activeStore && (
         <SectionCard title="Membros">
