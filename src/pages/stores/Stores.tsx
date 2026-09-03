@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Instagram, Mail, MessageCircle, ShoppingBag, Utensils } from "lucide-react";
+import {
+  Instagram,
+  Mail,
+  MessageCircle,
+  ShoppingBag,
+  Utensils,
+} from "lucide-react";
 import Button from "@atoms/Button";
 import Input from "@atoms/Input";
 import Select from "@atoms/Select";
@@ -133,16 +139,14 @@ export default function Stores() {
     setSavedForm(next);
   }, [activeStore]);
 
-  const updateField = useCallback(
-    (field: keyof StoreForm, value: string) => {
-      setForm((prev) => ({ ...prev, [field]: value }));
-    },
-    [],
-  );
+  const updateField = useCallback((field: keyof StoreForm, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }, []);
 
   const cnpjDigits = digits(form.cnpj);
   const cnpjError =
-    cnpjDigits.length > 0 && (cnpjDigits.length !== 14 || !isValidCNPJ(cnpjDigits))
+    cnpjDigits.length > 0 &&
+    (cnpjDigits.length !== 14 || !isValidCNPJ(cnpjDigits))
       ? "CNPJ inválido."
       : "";
 
@@ -428,7 +432,9 @@ export default function Stores() {
                 <Button
                   variant="primary"
                   loading={saving}
-                  disabled={saving || !isDirty || !form.name.trim() || !!cnpjError}
+                  disabled={
+                    saving || !isDirty || !form.name.trim() || !!cnpjError
+                  }
                   onClick={handleSave}
                 >
                   Salvar alterações

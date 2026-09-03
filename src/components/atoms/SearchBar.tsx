@@ -1,8 +1,10 @@
 import React, { InputHTMLAttributes } from "react";
 import { Search } from "lucide-react";
 
-interface SearchBarProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> {
+interface SearchBarProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "onChange"
+> {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;

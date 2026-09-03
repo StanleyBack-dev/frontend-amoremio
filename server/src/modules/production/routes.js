@@ -60,9 +60,7 @@ recipesRouter.get(
 
 recipesRouter.post(
   "/",
-  handle((req) =>
-    createRecipe(req.body, getAuthContext(req), req.requestId),
-  ),
+  handle((req) => createRecipe(req.body, getAuthContext(req), req.requestId)),
 );
 
 recipesRouter.get(

@@ -66,13 +66,31 @@ async function runMutation(query, key, input, ctx, rid) {
 export const createSalesOrder = (i, c, r) =>
   runMutation(CREATE_SALES_ORDER_MUTATION, "createSalesOrder", i, c, r);
 export const updateSalesOrderHeader = (i, c, r) =>
-  runMutation(UPDATE_SALES_ORDER_HEADER_MUTATION, "updateSalesOrderHeader", i, c, r);
+  runMutation(
+    UPDATE_SALES_ORDER_HEADER_MUTATION,
+    "updateSalesOrderHeader",
+    i,
+    c,
+    r,
+  );
 export const addSalesOrderItem = (i, c, r) =>
   runMutation(ADD_SALES_ORDER_ITEM_MUTATION, "addSalesOrderItem", i, c, r);
 export const updateSalesOrderItem = (i, c, r) =>
-  runMutation(UPDATE_SALES_ORDER_ITEM_MUTATION, "updateSalesOrderItem", i, c, r);
+  runMutation(
+    UPDATE_SALES_ORDER_ITEM_MUTATION,
+    "updateSalesOrderItem",
+    i,
+    c,
+    r,
+  );
 export const removeSalesOrderItem = (i, c, r) =>
-  runMutation(REMOVE_SALES_ORDER_ITEM_MUTATION, "removeSalesOrderItem", i, c, r);
+  runMutation(
+    REMOVE_SALES_ORDER_ITEM_MUTATION,
+    "removeSalesOrderItem",
+    i,
+    c,
+    r,
+  );
 export const confirmSalesOrder = (i, c, r) =>
   runMutation(CONFIRM_SALES_ORDER_MUTATION, "confirmSalesOrder", i, c, r);
 export const cancelSalesOrder = (i, c, r) =>

@@ -324,9 +324,7 @@ export default function Production() {
         ...item,
         quantity,
         unitCost,
-        lineCost: isRascunho
-          ? round4(quantity * unitCost)
-          : item.lineCost,
+        lineCost: isRascunho ? round4(quantity * unitCost) : item.lineCost,
       };
     });
     const inputsCost = round4(
@@ -343,7 +341,14 @@ export default function Production() {
       : open.actualOutputQuantity;
     const unitCost = outputQty > 0 ? round4(totalCost / outputQty) : 0;
     return { lines, inputsCost, totalCost, unitCost, outputQty, plannedQty };
-  }, [open, avgCostByProduct, editBatches, editLabor, editOverhead, editActual]);
+  }, [
+    open,
+    avgCostByProduct,
+    editBatches,
+    editLabor,
+    editOverhead,
+    editActual,
+  ]);
 
   if (!activeStoreId) {
     return (
@@ -387,9 +392,7 @@ export default function Production() {
             <Select
               label="Receita"
               value={filters.recipe}
-              onChange={(e) =>
-                patchFilters({ recipe: e.target.value })
-              }
+              onChange={(e) => patchFilters({ recipe: e.target.value })}
             >
               <option value="">Todas</option>
               {filterOptions.recipes.map((recipe) => (
@@ -402,9 +405,7 @@ export default function Production() {
             <Select
               label="Situação"
               value={filters.status}
-              onChange={(e) =>
-                patchFilters({ status: e.target.value })
-              }
+              onChange={(e) => patchFilters({ status: e.target.value })}
             >
               <option value="">Todas</option>
               <option value="RASCUNHO">Rascunho</option>
@@ -415,9 +416,7 @@ export default function Production() {
             <Select
               label="Criado por"
               value={filters.createdBy}
-              onChange={(e) =>
-                patchFilters({ createdBy: e.target.value })
-              }
+              onChange={(e) => patchFilters({ createdBy: e.target.value })}
             >
               <option value="">Todos</option>
               {filterOptions.creators.map((creator) => (

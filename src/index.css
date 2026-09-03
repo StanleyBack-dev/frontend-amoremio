@@ -23,7 +23,13 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     font-family:
-      Inter, "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial,
+      Inter,
+      "Segoe UI",
+      system-ui,
+      -apple-system,
+      Roboto,
+      Helvetica,
+      Arial,
       sans-serif;
     font-size: 14px;
   }

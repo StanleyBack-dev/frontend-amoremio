@@ -358,9 +358,7 @@ export default function Products() {
             <Select
               label="Marca"
               value={filters.brand}
-              onChange={(e) =>
-                patchFilters({ brand: e.target.value })
-              }
+              onChange={(e) => patchFilters({ brand: e.target.value })}
             >
               <option value="">Todas</option>
               <option value={NO_BRAND}>Sem marca</option>
@@ -400,9 +398,7 @@ export default function Products() {
             <Select
               label="Situação"
               value={filters.status}
-              onChange={(e) =>
-                patchFilters({ status: e.target.value })
-              }
+              onChange={(e) => patchFilters({ status: e.target.value })}
             >
               <option value="">Todas</option>
               <option value="true">Ativo</option>
@@ -412,9 +408,7 @@ export default function Products() {
             <Select
               label="Criado por"
               value={filters.createdBy}
-              onChange={(e) =>
-                patchFilters({ createdBy: e.target.value })
-              }
+              onChange={(e) => patchFilters({ createdBy: e.target.value })}
             >
               <option value="">Todos</option>
               {creatorOptions.map((creator) => (

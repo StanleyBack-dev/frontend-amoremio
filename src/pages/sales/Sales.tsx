@@ -94,8 +94,7 @@ export default function Sales() {
 
   const [customer, setCustomer] = useState("");
   const [discount, setDiscount] = useState(0);
-  const [discountMode, setDiscountMode] =
-    useState<SalesDiscountMode>("VALOR");
+  const [discountMode, setDiscountMode] = useState<SalesDiscountMode>("VALOR");
   const [discountPercent, setDiscountPercent] = useState(0);
   const [channel, setChannel] = useState<SalesChannel>("BALCAO");
   const [commission, setCommission] = useState(0);
@@ -599,9 +598,7 @@ export default function Sales() {
             <Select
               label="Cliente"
               value={filters.customer}
-              onChange={(e) =>
-                patchFilters({ customer: e.target.value })
-              }
+              onChange={(e) => patchFilters({ customer: e.target.value })}
             >
               <option value="">Todos</option>
               {filterOptions.customers.map((name) => (
@@ -614,9 +611,7 @@ export default function Sales() {
             <Select
               label="Canal"
               value={filters.channel}
-              onChange={(e) =>
-                patchFilters({ channel: e.target.value })
-              }
+              onChange={(e) => patchFilters({ channel: e.target.value })}
             >
               <option value="">Todos</option>
               {filterOptions.channels.map((ch) => (
@@ -629,9 +624,7 @@ export default function Sales() {
             <Select
               label="Situação"
               value={filters.status}
-              onChange={(e) =>
-                patchFilters({ status: e.target.value })
-              }
+              onChange={(e) => patchFilters({ status: e.target.value })}
             >
               <option value="">Todas</option>
               <option value="ABERTA">Aberta</option>
@@ -642,9 +635,7 @@ export default function Sales() {
             <Select
               label="Criado por"
               value={filters.createdBy}
-              onChange={(e) =>
-                patchFilters({ createdBy: e.target.value })
-              }
+              onChange={(e) => patchFilters({ createdBy: e.target.value })}
             >
               <option value="">Todos</option>
               {filterOptions.creators.map((creator) => (
@@ -977,8 +968,7 @@ export default function Sales() {
                         ? discountMode === "PERCENTUAL"
                         : open.discountMode === "PERCENTUAL") && (
                         <span className="ml-1 text-ink-subtle">
-                          (
-                          {isOpen ? discountPercent : open.discountPercent}
+                          ({isOpen ? discountPercent : open.discountPercent}
                           %)
                         </span>
                       )}

@@ -688,9 +688,7 @@ export default function Purchases() {
             <Select
               label="Fornecedor"
               value={filters.supplier}
-              onChange={(e) =>
-                patchFilters({ supplier: e.target.value })
-              }
+              onChange={(e) => patchFilters({ supplier: e.target.value })}
             >
               <option value="">Todos</option>
               {filterOptions.suppliers.map((name) => (
@@ -703,9 +701,7 @@ export default function Purchases() {
             <Select
               label="Situação"
               value={filters.status}
-              onChange={(e) =>
-                patchFilters({ status: e.target.value })
-              }
+              onChange={(e) => patchFilters({ status: e.target.value })}
             >
               <option value="">Todas</option>
               <option value="RASCUNHO">Rascunho</option>
@@ -716,9 +712,7 @@ export default function Purchases() {
             <Select
               label="Criado por"
               value={filters.createdBy}
-              onChange={(e) =>
-                patchFilters({ createdBy: e.target.value })
-              }
+              onChange={(e) => patchFilters({ createdBy: e.target.value })}
             >
               <option value="">Todos</option>
               {filterOptions.creators.map((creator) => (

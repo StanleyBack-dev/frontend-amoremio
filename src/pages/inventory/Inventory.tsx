@@ -344,9 +344,7 @@ export default function Inventory() {
             <Select
               label="Marca"
               value={filters.brand}
-              onChange={(e) =>
-                patchFilters({ brand: e.target.value })
-              }
+              onChange={(e) => patchFilters({ brand: e.target.value })}
             >
               <option value="">Todas</option>
               <option value={NO_BRAND}>Sem marca</option>
@@ -386,9 +384,7 @@ export default function Inventory() {
             <Select
               label="Situação"
               value={filters.status}
-              onChange={(e) =>
-                patchFilters({ status: e.target.value })
-              }
+              onChange={(e) => patchFilters({ status: e.target.value })}
             >
               <option value="">Todas</option>
               <option value="true">Ativo</option>
@@ -518,9 +514,7 @@ export default function Inventory() {
               <br />
               Valor em estoque:{" "}
               <strong className="text-ink tabular-nums">
-                {brl(
-                  adjustProduct.quantityOnHand * adjustProduct.averageCost,
-                )}
+                {brl(adjustProduct.quantityOnHand * adjustProduct.averageCost)}
               </strong>
             </div>
 

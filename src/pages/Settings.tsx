@@ -1,7 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import SectionCard from "@/components/organisms/SectionCard";
 import SettingsLinkItem from "@molecules/SettingsLinkItem";
-import { settingsPageItems, viewTitles, getPathForView } from "@/router/navigation";
+import {
+  settingsPageItems,
+  viewTitles,
+  getPathForView,
+} from "@/router/navigation";
 
 export default function Settings() {
   const navigate = useNavigate();

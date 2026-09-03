@@ -65,7 +65,8 @@ export const accountNavigationItems: NavigationItem[] = [
 ];
 
 // Kept for the Header page-title lookup — everything not in the primary nav.
-export const secondaryNavigationItems: NavigationItem[] = accountNavigationItems;
+export const secondaryNavigationItems: NavigationItem[] =
+  accountNavigationItems;
 
 export const settingsPageItems: NavigationItem[] = [
   {

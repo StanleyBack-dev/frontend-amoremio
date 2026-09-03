@@ -220,9 +220,7 @@ export default function Brands() {
             <Select
               label="Situação"
               value={filters.status}
-              onChange={(e) =>
-                patchFilters({ status: e.target.value })
-              }
+              onChange={(e) => patchFilters({ status: e.target.value })}
             >
               <option value="">Todas</option>
               <option value="true">Ativa</option>
@@ -232,9 +230,7 @@ export default function Brands() {
             <Select
               label="Criada por"
               value={filters.createdBy}
-              onChange={(e) =>
-                patchFilters({ createdBy: e.target.value })
-              }
+              onChange={(e) => patchFilters({ createdBy: e.target.value })}
             >
               <option value="">Todos</option>
               {filterOptions.creators.map((creator) => (

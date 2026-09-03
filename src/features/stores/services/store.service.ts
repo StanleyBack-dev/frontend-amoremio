@@ -43,9 +43,7 @@ export async function fetchStoreById(idStore: string): Promise<Store> {
 
 export async function createStore(payload: CreateStorePayload): Promise<Store> {
   const parsedPayload = CreateStorePayloadSchema.parse(payload);
-  const parsed = StoreSchema.safeParse(
-    await createStoreRequest(parsedPayload),
-  );
+  const parsed = StoreSchema.safeParse(await createStoreRequest(parsedPayload));
   if (!parsed.success) {
     throw new Error(INVALID_DATA);
   }
@@ -54,9 +52,7 @@ export async function createStore(payload: CreateStorePayload): Promise<Store> {
 
 export async function updateStore(payload: UpdateStorePayload): Promise<Store> {
   const parsedPayload = UpdateStorePayloadSchema.parse(payload);
-  const parsed = StoreSchema.safeParse(
-    await updateStoreRequest(parsedPayload),
-  );
+  const parsed = StoreSchema.safeParse(await updateStoreRequest(parsedPayload));
   if (!parsed.success) {
     throw new Error(INVALID_DATA);
   }

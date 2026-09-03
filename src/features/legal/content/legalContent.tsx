@@ -51,15 +51,15 @@ export const TERMS_OF_USE_SECTIONS: LegalSection[] = [
     content: (
       <>
         <p>
-          Para usar a Amore Mio você precisa de uma conta de acesso com usuário e
-          senha, fornecida pela administração. Você é responsável por manter suas
-          credenciais em sigilo e por todas as atividades realizadas na sua
+          Para usar a Amore Mio você precisa de uma conta de acesso com usuário
+          e senha, fornecida pela administração. Você é responsável por manter
+          suas credenciais em sigilo e por todas as atividades realizadas na sua
           conta.
         </p>
         <p>
           As informações fornecidas no cadastro devem ser verdadeiras, completas
-          e mantidas atualizadas. A Amore Mio pode suspender ou encerrar contas com
-          informações falsas ou uso indevido da plataforma.
+          e mantidas atualizadas. A Amore Mio pode suspender ou encerrar contas
+          com informações falsas ou uso indevido da plataforma.
         </p>
       </>
     ),
@@ -70,11 +70,11 @@ export const TERMS_OF_USE_SECTIONS: LegalSection[] = [
     content: (
       <>
         <p>
-          A Amore Mio oferece um plano gratuito com funcionalidades limitadas e um
-          plano Pro, pago mensal ou anualmente, que pode incluir um período de
-          teste gratuito antes da primeira cobrança. Os pagamentos do plano Pro
-          são processados por um parceiro de pagamentos (Asaas) — a Amore Mio não
-          armazena os dados completos do seu cartão de crédito.
+          A Amore Mio oferece um plano gratuito com funcionalidades limitadas e
+          um plano Pro, pago mensal ou anualmente, que pode incluir um período
+          de teste gratuito antes da primeira cobrança. Os pagamentos do plano
+          Pro são processados por um parceiro de pagamentos (Asaas) — a Amore
+          Mio não armazena os dados completos do seu cartão de crédito.
         </p>
         <p>
           Você pode cancelar a assinatura do plano Pro a qualquer momento pela
@@ -97,11 +97,12 @@ export const TERMS_OF_USE_SECTIONS: LegalSection[] = [
     content: (
       <>
         <p>
-          A Amore Mio pode oferecer um programa de indicações: ao compartilhar seu
-          código pessoal, você pode acumular créditos em dinheiro quando amigos
-          indicados assinam e pagam o plano Pro. Os valores de crédito por
-          indicação, o valor mínimo para saque e o prazo de confirmação vigentes
-          são sempre exibidos na tela de Indicações dentro da plataforma.
+          A Amore Mio pode oferecer um programa de indicações: ao compartilhar
+          seu código pessoal, você pode acumular créditos em dinheiro quando
+          amigos indicados assinam e pagam o plano Pro. Os valores de crédito
+          por indicação, o valor mínimo para saque e o prazo de confirmação
+          vigentes são sempre exibidos na tela de Indicações dentro da
+          plataforma.
         </p>
         <p>
           Um crédito só é gerado após a primeira cobrança do indicado ser
@@ -113,13 +114,14 @@ export const TERMS_OF_USE_SECTIONS: LegalSection[] = [
         <p>
           Os saques são solicitados por você e pagos via Pix, na chave informada
           no momento da solicitação — você é responsável por garantir que a
-          chave Pix fornecida é válida e pertence a você. A Amore Mio pode recusar,
-          reverter ou cancelar créditos obtidos por meio de fraude, contas
-          duplicadas, indicações fictícias ou qualquer uso indevido do programa.
+          chave Pix fornecida é válida e pertence a você. A Amore Mio pode
+          recusar, reverter ou cancelar créditos obtidos por meio de fraude,
+          contas duplicadas, indicações fictícias ou qualquer uso indevido do
+          programa.
         </p>
         <p>
-          A Amore Mio pode alterar as regras, os valores ou encerrar o programa de
-          indicações a qualquer momento, respeitando os saldos já disponíveis
+          A Amore Mio pode alterar as regras, os valores ou encerrar o programa
+          de indicações a qualquer momento, respeitando os saldos já disponíveis
           para saque no momento da alteração.
         </p>
       </>
@@ -130,11 +132,11 @@ export const TERMS_OF_USE_SECTIONS: LegalSection[] = [
     title: "6. Uso Adequado da Plataforma",
     content: (
       <p>
-        Você concorda em não utilizar a Amore Mio para fins ilícitos, em não tentar
-        acessar contas de outros usuários, não realizar engenharia reversa, não
-        sobrecarregar ou tentar comprometer a segurança dos nossos sistemas, e
-        em respeitar o limite de uso do canal de suporte (uma mensagem por dia
-        por usuário).
+        Você concorda em não utilizar a Amore Mio para fins ilícitos, em não
+        tentar acessar contas de outros usuários, não realizar engenharia
+        reversa, não sobrecarregar ou tentar comprometer a segurança dos nossos
+        sistemas, e em respeitar o limite de uso do canal de suporte (uma
+        mensagem por dia por usuário).
       </p>
     ),
   },
@@ -146,8 +148,8 @@ export const TERMS_OF_USE_SECTIONS: LegalSection[] = [
         A marca Amore Mio, o layout, o código-fonte, os textos e os demais
         elementos da plataforma são de propriedade da Amore Mio e protegidos por
         lei. Os dados financeiros que você cadastra continuam sendo seus — a
-        Amore Mio apenas os processa para fornecer o serviço, conforme descrito na
-        Política de Privacidade.
+        Amore Mio apenas os processa para fornecer o serviço, conforme descrito
+        na Política de Privacidade.
       </p>
     ),
   },
@@ -170,8 +172,8 @@ export const TERMS_OF_USE_SECTIONS: LegalSection[] = [
     title: "9. Alterações e Interrupção do Serviço",
     content: (
       <p>
-        A Amore Mio pode adicionar, alterar ou remover funcionalidades a qualquer
-        momento, buscando sempre preservar a integridade dos dados já
+        A Amore Mio pode adicionar, alterar ou remover funcionalidades a
+        qualquer momento, buscando sempre preservar a integridade dos dados já
         cadastrados. Em caso de descontinuação definitiva do serviço, você será
         avisado com antecedência razoável pelo e-mail cadastrado.
       </p>
@@ -256,8 +258,8 @@ export const PRIVACY_POLICY_SECTIONS: LegalSection[] = [
         <p>
           <strong>Dados de pagamento:</strong> ao assinar o plano Pro, os dados
           de cobrança são processados diretamente pelo nosso parceiro de
-          pagamentos (Asaas); a Amore Mio recebe apenas a confirmação do pagamento
-          e o status da assinatura, nunca o número completo do cartão.
+          pagamentos (Asaas); a Amore Mio recebe apenas a confirmação do
+          pagamento e o status da assinatura, nunca o número completo do cartão.
         </p>
         <p>
           <strong>Dados de indicação e saque:</strong> seu código de indicação

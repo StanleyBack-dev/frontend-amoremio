@@ -27,7 +27,10 @@ export async function listPurchases(input, authContext, requestId) {
     requestId,
     ...authContext,
   });
-  return requireData(data.getStorePurchases, "Invalid purchases list response.");
+  return requireData(
+    data.getStorePurchases,
+    "Invalid purchases list response.",
+  );
 }
 
 export async function listPurchaseFilterOptions(input, authContext, requestId) {
@@ -64,15 +67,39 @@ async function runMutation(query, key, input, authContext, requestId) {
 }
 
 export const createPurchaseDraft = (input, ctx, rid) =>
-  runMutation(CREATE_PURCHASE_DRAFT_MUTATION, "createPurchaseDraft", input, ctx, rid);
+  runMutation(
+    CREATE_PURCHASE_DRAFT_MUTATION,
+    "createPurchaseDraft",
+    input,
+    ctx,
+    rid,
+  );
 export const updatePurchaseHeader = (input, ctx, rid) =>
-  runMutation(UPDATE_PURCHASE_HEADER_MUTATION, "updatePurchaseHeader", input, ctx, rid);
+  runMutation(
+    UPDATE_PURCHASE_HEADER_MUTATION,
+    "updatePurchaseHeader",
+    input,
+    ctx,
+    rid,
+  );
 export const addPurchaseItem = (input, ctx, rid) =>
   runMutation(ADD_PURCHASE_ITEM_MUTATION, "addPurchaseItem", input, ctx, rid);
 export const updatePurchaseItem = (input, ctx, rid) =>
-  runMutation(UPDATE_PURCHASE_ITEM_MUTATION, "updatePurchaseItem", input, ctx, rid);
+  runMutation(
+    UPDATE_PURCHASE_ITEM_MUTATION,
+    "updatePurchaseItem",
+    input,
+    ctx,
+    rid,
+  );
 export const removePurchaseItem = (input, ctx, rid) =>
-  runMutation(REMOVE_PURCHASE_ITEM_MUTATION, "removePurchaseItem", input, ctx, rid);
+  runMutation(
+    REMOVE_PURCHASE_ITEM_MUTATION,
+    "removePurchaseItem",
+    input,
+    ctx,
+    rid,
+  );
 export const finalizePurchase = (input, ctx, rid) =>
   runMutation(FINALIZE_PURCHASE_MUTATION, "finalizePurchase", input, ctx, rid);
 export const cancelPurchase = (input, ctx, rid) =>

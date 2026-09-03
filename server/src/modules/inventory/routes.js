@@ -1,11 +1,7 @@
 import { Router } from "express";
 import { getAuthContext } from "../../shared/auth/get-user-id.js";
 import { buildErrorResponse } from "../../shared/http/error-response.js";
-import {
-  adjustStock,
-  listStockMovements,
-  listStoreStock,
-} from "./service.js";
+import { adjustStock, listStockMovements, listStoreStock } from "./service.js";
 
 const router = Router();
 

@@ -72,9 +72,7 @@ export type SalesOrdersResponse = PaginatedResponse<SalesOrder>;
 export const SalesOrderFilterOptionsSchema = z.object({
   customers: z.array(z.string()).default([]),
   channels: z.array(SalesChannelSchema).default([]),
-  creators: z
-    .array(z.object({ id: z.string(), name: z.string() }))
-    .default([]),
+  creators: z.array(z.object({ id: z.string(), name: z.string() })).default([]),
 });
 export type SalesOrderFilterOptions = z.infer<
   typeof SalesOrderFilterOptionsSchema

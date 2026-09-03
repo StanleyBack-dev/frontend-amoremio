@@ -365,7 +365,6 @@ export default function UserForm({ mode, userId, onDone }: UserFormProps) {
               <Button
                 type="button"
                 variant="outline"
-
                 disabled={saving || !isLocked}
                 onClick={handleUnlock}
                 loading={saving}

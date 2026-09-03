@@ -248,10 +248,7 @@ export default function Sidebar({
                       : "text-cream-muted hover:bg-white/5 hover:text-cream"
                   }`}
                 >
-                  <CircleUserRound
-                    size={20}
-                    className="text-cream-subtle"
-                  />
+                  <CircleUserRound size={20} className="text-cream-subtle" />
                   <span className="flex-1 text-left">Conta</span>
                   <ChevronDown
                     size={16}

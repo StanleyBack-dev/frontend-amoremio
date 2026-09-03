@@ -22,7 +22,10 @@ export async function listSuppliers(input, authContext, requestId) {
     requestId,
     ...authContext,
   });
-  return requireData(data.getStoreSuppliers, "Invalid suppliers list response.");
+  return requireData(
+    data.getStoreSuppliers,
+    "Invalid suppliers list response.",
+  );
 }
 
 export async function listSupplierFilterOptions(input, authContext, requestId) {

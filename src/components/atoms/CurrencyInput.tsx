@@ -13,11 +13,10 @@ import {
   fieldLabelClass,
 } from "./field";
 
-interface CurrencyInputProps
-  extends Omit<
-    InputHTMLAttributes<HTMLInputElement>,
-    "value" | "onChange" | "type"
-  > {
+interface CurrencyInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onChange" | "type"
+> {
   label?: string;
   wrapperClassName?: string;
   labelClassName?: string;

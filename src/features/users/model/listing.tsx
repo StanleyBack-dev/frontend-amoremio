@@ -47,9 +47,7 @@ export function getUserTableColumns(actions: {
       key: "name",
       label: userUiCopy.listing.columns.name,
       render: (user) => (
-        <span className="text-sm font-semibold text-ink">
-          {user.name}
-        </span>
+        <span className="text-sm font-semibold text-ink">{user.name}</span>
       ),
     },
     {
@@ -70,9 +68,7 @@ export function getUserTableColumns(actions: {
       key: "group",
       label: userUiCopy.listing.columns.group,
       render: (user) => (
-        <span className="text-sm text-ink">
-          {getGroupLabel(user.group)}
-        </span>
+        <span className="text-sm text-ink">{getGroupLabel(user.group)}</span>
       ),
     },
     {

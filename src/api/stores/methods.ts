@@ -30,9 +30,7 @@ export async function getStoreById(idStore: string): Promise<Store> {
   }
 }
 
-export async function createStore(
-  payload: CreateStorePayload,
-): Promise<Store> {
+export async function createStore(payload: CreateStorePayload): Promise<Store> {
   try {
     const response = await apiHttp.post<Store>("/stores", payload);
     return response.data;
@@ -43,9 +41,7 @@ export async function createStore(
   }
 }
 
-export async function updateStore(
-  payload: UpdateStorePayload,
-): Promise<Store> {
+export async function updateStore(payload: UpdateStorePayload): Promise<Store> {
   try {
     const { idStore, ...body } = payload;
     const response = await apiHttp.patch<Store>(`/stores/${idStore}`, body);
@@ -57,9 +53,7 @@ export async function updateStore(
   }
 }
 
-export async function getStoreMembers(
-  idStore: string,
-): Promise<StoreMember[]> {
+export async function getStoreMembers(idStore: string): Promise<StoreMember[]> {
   try {
     const response = await apiHttp.get<StoreMember[]>(
       `/stores/${idStore}/members`,
@@ -99,7 +93,10 @@ export async function updateStoreMemberRole(
     return response.data;
   } catch (error) {
     throw new Error(
-      getApiErrorMessage(error, "Não foi possível atualizar o papel do membro."),
+      getApiErrorMessage(
+        error,
+        "Não foi possível atualizar o papel do membro.",
+      ),
     );
   }
 }

@@ -15,7 +15,10 @@ interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-const badgeStyles: Record<NonNullable<ConfirmDialogProps["variant"]>, string> = {
+const badgeStyles: Record<
+  NonNullable<ConfirmDialogProps["variant"]>,
+  string
+> = {
   default: "border-gold-300 bg-gold-100 text-gold-700",
   warning: "border-warn-border bg-warn-bg text-warn-fg",
   danger: "border-err-border bg-err-bg text-err-fg",
