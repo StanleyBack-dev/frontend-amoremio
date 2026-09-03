@@ -26,7 +26,7 @@ function toBoolean(value, fallback) {
 }
 
 export const config = {
-  port: toNumber(process.env.BFF_PORT, 5000),
+  port: toNumber(process.env.BFF_PORT, 5050),
   backendGraphqlUrl:
     process.env.BACKEND_GRAPHQL_URL || "http://localhost:4000/graphql",
   backendProtectionBypassSecret:
