@@ -180,6 +180,9 @@ export default function Dashboard() {
               label: "Qtd.",
               className: "text-right tabular-nums",
               render: (row) => qty(row.quantitySold),
+              // Subtitle on the mobile card — a bare quantity reads poorly there.
+              mobileRender: (row) =>
+                `${qty(row.quantitySold)} vendida(s) • ${brl(row.revenue)}`,
             },
             {
               key: "revenue",
@@ -239,6 +242,7 @@ export default function Dashboard() {
               key: "orderCount",
               label: "Vendas",
               className: "text-right tabular-nums",
+              mobileRender: (row) => `${row.orderCount} venda(s)`,
             },
             {
               key: "grossSales",
