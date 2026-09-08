@@ -37,9 +37,10 @@ export const FinanceDashboardSchema = z.object({
     })
     .array()
     .default([]),
-  monthlySeries: z
+  granularity: z.enum(["DAY", "WEEK", "MONTH"]),
+  timeSeries: z
     .object({
-      month: z.string(),
+      date: z.string(),
       purchases: z.number(),
       sales: z.number(),
     })

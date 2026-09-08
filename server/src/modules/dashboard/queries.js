@@ -32,8 +32,9 @@ export const GET_FINANCE_DASHBOARD_QUERY = `
         netProfit
         marginPercent
       }
-      monthlySeries {
-        month
+      granularity
+      timeSeries {
+        date
         purchases
         sales
       }
