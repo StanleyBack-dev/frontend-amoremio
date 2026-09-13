@@ -31,6 +31,36 @@ export default function AppLayout() {
     setMobileSidebarOpen(false);
   }, [location.pathname]);
 
+  // Lock the page's own scroll while the mobile drawer is open — otherwise a
+  // touch scroll that reaches the sidebar's own scroll boundary chains into
+  // the page behind it, which on mobile browsers also jumps/clips the layout
+  // as the toolbar shows or hides mid-gesture. Pinning `body` via `position:
+  // fixed` (rather than just `overflow: hidden`) is what actually blocks
+  // touch-driven scrolling on iOS Safari.
+  useEffect(() => {
+    if (!mobileSidebarOpen) return;
+
+    const { body } = document;
+    const scrollY = window.scrollY;
+    const previousPosition = body.style.position;
+    const previousTop = body.style.top;
+    const previousWidth = body.style.width;
+    const previousOverflow = body.style.overflow;
+
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
+    return () => {
+      body.style.position = previousPosition;
+      body.style.top = previousTop;
+      body.style.width = previousWidth;
+      body.style.overflow = previousOverflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [mobileSidebarOpen]);
+
   function toggleCollapsed() {
     setCollapsed((current) => {
       const next = !current;
