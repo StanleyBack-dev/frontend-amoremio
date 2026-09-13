@@ -69,7 +69,8 @@ export const UpdateProductPayloadSchema = z.object({
   idProduct: z.string().min(1),
   name: z.string().min(1).optional(),
   description: z.string().optional(),
-  brand: z.string().optional(),
+  // `null` clears the brand; `undefined` (an omitted key) leaves it untouched.
+  brand: z.string().nullable().optional(),
   kind: ProductKindSchema.optional(),
   unit: UnitOfMeasureSchema.optional(),
   packagingUnit: PackagingUnitSchema.optional(),

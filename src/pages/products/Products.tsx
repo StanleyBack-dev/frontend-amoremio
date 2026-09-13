@@ -277,7 +277,9 @@ export default function Products() {
           idStore: activeStoreId,
           idProduct: form.idProduct,
           name,
-          brand: form.brand.trim() || undefined,
+          // Explicit `null` clears the brand; an omitted/undefined key would
+          // leave the previously saved brand untouched on the backend.
+          brand: form.brand.trim() || null,
           kind: form.kind,
           unit: form.unit,
           packagingUnit: form.packagingUnit,

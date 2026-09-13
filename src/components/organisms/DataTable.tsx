@@ -19,10 +19,10 @@ export interface DataTableProps<T> {
   columns: DataTableColumn<T>[];
   getId?: (row: T) => string | number;
   emptyMessage?: string;
-  onRowClick?: (row: T) => void;
   /**
-   * When set, a "view record" eye button is prepended as the first column
-   * and clicking a row also triggers it.
+   * When set, a "view record" eye button is prepended as the first column.
+   * This is the only way to open the record — rows themselves are not
+   * clickable, so there is always an explicit edit affordance.
    */
   onView?: (row: T) => void;
   viewLabel?: string;
@@ -37,7 +37,6 @@ export default function DataTable<T>({
   columns,
   getId,
   emptyMessage,
-  onRowClick,
   onView,
   viewLabel = "Visualizar",
   className,
@@ -81,7 +80,6 @@ export default function DataTable<T>({
       data={data}
       rowKey={rowKey}
       emptyMessage={emptyMessage}
-      onRowClick={onRowClick ?? onView}
       className={className}
       renderExpanded={renderExpanded}
       canExpand={canExpand}

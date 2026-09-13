@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronDown,
@@ -89,24 +89,9 @@ export default function Sidebar({
   const { showSuccess, showError } = useToast();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState<boolean>(() => {
-    try {
-      return window.localStorage.getItem("amoremio:sidebarAccountOpen") === "1";
-    } catch {
-      return false;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        "amoremio:sidebarAccountOpen",
-        accountOpen ? "1" : "0",
-      );
-    } catch {
-      /* storage unavailable — the section just won't be remembered */
-    }
-  }, [accountOpen]);
+  // Always starts closed — only user interaction should open it, never a
+  // remembered state from a previous visit.
+  const [accountOpen, setAccountOpen] = useState(false);
 
   const visiblePrimaryItems = primaryNavigationItems.filter((item) =>
     hasPageAccess(item.id),
@@ -157,7 +142,7 @@ export default function Sidebar({
         aria-hidden={!mobileOpen}
       />
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-64 max-w-[85vw] flex-col border-r border-shell-line bg-gradient-to-b from-[#2A1216] via-[#20100F] to-[#1A0C0E] transition-[transform,width] duration-200 lg:max-w-none ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-64 max-w-[85vw] flex-col border-r border-shell-line bg-gradient-to-b from-[#2A1216] via-[#20100F] to-[#1A0C0E] transition-[transform,width] duration-200 lg:max-w-none ${
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         } ${collapsed ? "lg:w-[68px]" : "lg:w-64"}`}
       >
@@ -203,8 +188,16 @@ export default function Sidebar({
           )}
         </div>
 
+        {/* `min-h-0` is what makes a flex item honor `overflow-y-auto`
+            instead of growing to fit its content — without it `nav` would
+            expand past the space left below the header and push the footer
+            off-screen. The footer keeps `shrink-0` so it always keeps its
+            full natural height (which grows when the account sub-menu
+            opens); `nav` absorbs whatever space remains and scrolls
+            independently within it, so every primary item stays reachable
+            no matter how tall the footer gets. */}
         <nav
-          className={`sidebar-scrollbar flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden py-4 ${
+          className={`sidebar-scrollbar flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden overscroll-contain py-4 ${
             collapsed ? "lg:px-2 px-3" : "px-3"
           }`}
         >
@@ -220,7 +213,7 @@ export default function Sidebar({
         </nav>
 
         <div
-          className={`border-t border-shell-line py-3 ${
+          className={`shrink-0 border-t border-shell-line py-3 ${
             collapsed ? "lg:px-2 px-3" : "px-3"
           }`}
         >
