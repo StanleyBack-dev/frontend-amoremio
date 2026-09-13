@@ -16,6 +16,10 @@ export const viewTitles: Record<
     subtitle: "Fichas técnicas dos produtos finais",
   },
   inventory: { title: "Estoque", subtitle: "Saldos e movimentações" },
+  shoppingList: {
+    title: "Lista de Compras",
+    subtitle: "Planeje o que precisa comprar antes de abrir uma compra",
+  },
   purchases: {
     title: "Compras",
     subtitle: "Calculadora de compras e entrada no estoque",

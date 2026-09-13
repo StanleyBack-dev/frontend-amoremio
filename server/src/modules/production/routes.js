@@ -14,6 +14,7 @@ import {
   listProductionOrders,
   listRecipes,
   removeRecipeItem,
+  syncProductionOrderWithRecipe,
   updateProductionOrder,
   updateRecipe,
   updateRecipeItem,
@@ -220,6 +221,20 @@ productionOrdersRouter.post(
   "/:idProductionOrder/cancel",
   handle((req) =>
     cancelProductionOrder(
+      {
+        idStore: req.body?.idStore,
+        idProductionOrder: req.params.idProductionOrder,
+      },
+      getAuthContext(req),
+      req.requestId,
+    ),
+  ),
+);
+
+productionOrdersRouter.post(
+  "/:idProductionOrder/sync-with-recipe",
+  handle((req) =>
+    syncProductionOrderWithRecipe(
       {
         idStore: req.body?.idStore,
         idProductionOrder: req.params.idProductionOrder,

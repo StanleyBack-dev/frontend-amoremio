@@ -10,6 +10,7 @@ import {
   salesRoutePaths,
   profileRoutePaths,
   settingsRoutePaths,
+  shoppingListRoutePaths,
   storeRoutePaths,
   supplierRoutePaths,
   termsOfUseRoutePaths,
@@ -35,6 +36,10 @@ export function getActiveView(pathname: string): ActiveView {
 
   if (pathname.startsWith(inventoryRoutePaths.list)) {
     return "inventory";
+  }
+
+  if (pathname.startsWith(shoppingListRoutePaths.list)) {
+    return "shoppingList";
   }
 
   if (pathname.startsWith(purchaseRoutePaths.list)) {
@@ -87,6 +92,8 @@ export function getPathForView(view: ActiveView): string {
       return recipeRoutePaths.list;
     case "inventory":
       return inventoryRoutePaths.list;
+    case "shoppingList":
+      return shoppingListRoutePaths.list;
     case "purchases":
       return purchaseRoutePaths.list;
     case "production":

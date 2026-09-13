@@ -112,3 +112,18 @@ export async function cancelProductionOrder(
     throw fail(error, "Não foi possível cancelar a ordem de produção.");
   }
 }
+
+export async function syncProductionOrderWithRecipe(
+  idStore: string,
+  idProductionOrder: string,
+): Promise<ProductionOrder> {
+  try {
+    const response = await apiHttp.post<ProductionOrder>(
+      `/production-orders/${idProductionOrder}/sync-with-recipe`,
+      { idStore },
+    );
+    return response.data;
+  } catch (error) {
+    throw fail(error, "Não foi possível sincronizar com a receita.");
+  }
+}

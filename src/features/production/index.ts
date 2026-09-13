@@ -5,6 +5,7 @@ import {
   getProductionOrderById as getProductionOrderByIdRequest,
   getStoreProductionOrderFilterOptions as getStoreProductionOrderFilterOptionsRequest,
   getStoreProductionOrders as getStoreProductionOrdersRequest,
+  syncProductionOrderWithRecipe as syncProductionOrderWithRecipeRequest,
   updateProductionOrder as updateProductionOrderRequest,
 } from "@/api/production/methods";
 import {
@@ -92,6 +93,12 @@ export const cancelProductionOrder = async (
   idProductionOrder: string,
 ): Promise<ProductionOrder> =>
   parse(await cancelProductionOrderRequest(idStore, idProductionOrder));
+
+export const syncProductionOrderWithRecipe = async (
+  idStore: string,
+  idProductionOrder: string,
+): Promise<ProductionOrder> =>
+  parse(await syncProductionOrderWithRecipeRequest(idStore, idProductionOrder));
 
 export const productionOrderStatusLabel: Record<ProductionOrderStatus, string> =
   {

@@ -13,6 +13,7 @@ import {
   GET_STORE_PRODUCTION_ORDERS_QUERY,
   GET_STORE_RECIPES_QUERY,
   REMOVE_RECIPE_ITEM_MUTATION,
+  SYNC_PRODUCTION_ORDER_WITH_RECIPE_MUTATION,
   UPDATE_PRODUCTION_ORDER_MUTATION,
   UPDATE_RECIPE_ITEM_MUTATION,
   UPDATE_RECIPE_MUTATION,
@@ -132,6 +133,14 @@ export const cancelProductionOrder = (input, ctx, rid) =>
   runMutation(
     CANCEL_PRODUCTION_ORDER_MUTATION,
     "cancelProductionOrder",
+    input,
+    ctx,
+    rid,
+  );
+export const syncProductionOrderWithRecipe = (input, ctx, rid) =>
+  runMutation(
+    SYNC_PRODUCTION_ORDER_WITH_RECIPE_MUTATION,
+    "syncProductionOrderWithRecipe",
     input,
     ctx,
     rid,

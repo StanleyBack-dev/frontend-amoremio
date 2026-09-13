@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button from "@atoms/Button";
 import NumberInput from "@atoms/NumberInput";
 import CurrencyInput from "@atoms/CurrencyInput";
 import Input from "@atoms/Input";
 import Select from "@atoms/Select";
 import Badge from "@atoms/Badge";
+import ConfirmDialog from "@/components/molecules/ConfirmDialog";
 import FilterPanel from "@/components/molecules/FilterPanel";
 import Pagination from "@/components/molecules/Pagination";
 import SectionCard from "@/components/organisms/SectionCard";
@@ -32,6 +33,7 @@ import {
   fetchProductionOrderFilterOptions,
   fetchProductionOrders,
   productionOrderStatusLabel,
+  syncProductionOrderWithRecipe,
   updateProductionOrder,
 } from "@/features/production";
 
@@ -70,6 +72,8 @@ function round4(value: number): number {
 }
 
 const emptyFilters = { recipe: "", status: "", createdBy: "" };
+
+type PendingConfirm = { kind: "cancel" } | { kind: "sync" } | null;
 
 export default function Production() {
   const { showError, showSuccess } = useToast();
@@ -121,6 +125,12 @@ export default function Production() {
   const [editActual, setEditActual] = useState(0);
   const [editLabor, setEditLabor] = useState(0);
   const [editOverhead, setEditOverhead] = useState(0);
+
+  const [confirm, setConfirm] = useState<PendingConfirm>(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  // Synchronous lock — `confirmBusy` state updates too late to block a fast
+  // double-click on the confirm button.
+  const confirmLock = useRef(false);
 
   const buildListParams = useCallback((): ListProductionOrdersParams => {
     const params: ListProductionOrdersParams = {
@@ -297,6 +307,50 @@ export default function Production() {
       );
     } finally {
       setBusy(false);
+    }
+  }
+
+  // Re-pulls the recipe's current items into this draft — for when the
+  // recipe was edited (ingredient added/removed/quantity changed) after this
+  // order was created, and the change never reached the cost preview here.
+  async function handleSync() {
+    if (!activeStoreId || !open || open.status !== "RASCUNHO") return;
+    setBusy(true);
+    try {
+      const synced = await syncProductionOrderWithRecipe(
+        activeStoreId,
+        open.idProductionOrder,
+      );
+      showSuccess(
+        "Produção sincronizada",
+        "Os insumos foram recalculados a partir da receita atual.",
+      );
+      setOpen(synced);
+      syncEdit(synced);
+    } catch (error) {
+      showError(
+        "Erro ao sincronizar",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runConfirm() {
+    if (!confirm || confirmLock.current) return;
+    confirmLock.current = true;
+    setConfirmBusy(true);
+    try {
+      if (confirm.kind === "cancel") {
+        await handleCancel();
+      } else {
+        await handleSync();
+      }
+      setConfirm(null);
+    } finally {
+      confirmLock.current = false;
+      setConfirmBusy(false);
     }
   }
 
@@ -630,6 +684,29 @@ export default function Production() {
               title={
                 isDraft ? "Insumos a consumir (prévia)" : "Insumos consumidos"
               }
+              action={
+                isDraft ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => setConfirm({ kind: "sync" })}
+                    >
+                      Sincronizar com a receita
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      className="!text-err-fg hover:!bg-err-bg"
+                      onClick={() => setConfirm({ kind: "cancel" })}
+                    >
+                      Excluir produção
+                    </Button>
+                  </div>
+                ) : undefined
+              }
             >
               <DataTable
                 data={preview.lines}
@@ -688,20 +765,15 @@ export default function Production() {
                 </div>
               </dl>
 
-              {isDraft && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {canComplete && (
-                    <Button
-                      variant="primary"
-                      loading={busy}
-                      disabled={busy || open.items.length === 0}
-                      onClick={handleComplete}
-                    >
-                      Concluir produção (baixar insumos + gerar produto)
-                    </Button>
-                  )}
-                  <Button variant="outline" onClick={handleCancel}>
-                    Cancelar ordem
+              {isDraft && canComplete && (
+                <div className="mt-4">
+                  <Button
+                    variant="primary"
+                    loading={busy}
+                    disabled={busy || open.items.length === 0}
+                    onClick={handleComplete}
+                  >
+                    Concluir produção (baixar insumos + gerar produto)
                   </Button>
                 </div>
               )}
@@ -709,6 +781,26 @@ export default function Production() {
           </div>
         )}
       </Drawer>
+
+      <ConfirmDialog
+        open={confirm !== null}
+        title={
+          confirm?.kind === "cancel"
+            ? "Excluir produção"
+            : "Sincronizar com a receita"
+        }
+        description={
+          confirm?.kind === "cancel"
+            ? "A ordem será cancelada e não poderá mais ser editada. Nenhum estoque foi movimentado ainda."
+            : "Os insumos desta ordem serão recalculados a partir da receita como ela está agora — ingredientes adicionados, removidos ou com quantidade alterada na receita passam a valer aqui. Mão de obra e outros custos não são afetados."
+        }
+        variant={confirm?.kind === "cancel" ? "danger" : "default"}
+        confirmLabel={confirm?.kind === "cancel" ? "Excluir" : "Sincronizar"}
+        cancelLabel="Voltar"
+        loading={confirmBusy}
+        onConfirm={runConfirm}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ export type ActiveView =
   | "suppliers"
   | "recipes"
   | "inventory"
+  | "shoppingList"
   | "purchases"
   | "production"
   | "sales"

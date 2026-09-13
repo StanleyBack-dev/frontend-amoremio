@@ -55,6 +55,11 @@ import {
   removePurchaseItem,
   updatePurchaseHeader,
 } from "@/features/purchasing";
+import type { ShoppingList } from "@/api/shopping-list/schema";
+import {
+  fetchShoppingListByPurchaseId,
+  updateShoppingListItem,
+} from "@/features/shopping-list";
 import type {
   ListPurchasesParams,
   PurchaseDiscountMode,
@@ -138,6 +143,9 @@ export default function Purchases() {
   // yet. The RASCUNHO record is only created when the first item is added.
   const [composingNew, setComposingNew] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The shopping list this purchase was linked from, if any — a reference
+  // checklist only; its items are never copied into the purchase's own.
+  const [linkedList, setLinkedList] = useState<ShoppingList | null>(null);
 
   const [supplier, setSupplier] = useState("");
   const [freight, setFreight] = useState(0);
@@ -306,6 +314,15 @@ export default function Purchases() {
     const fresh = await track(fetchPurchaseById(activeStoreId, idPurchase));
     setOpen(fresh);
     syncHeaderFields(fresh);
+    try {
+      setLinkedList(
+        await fetchShoppingListByPurchaseId(activeStoreId, idPurchase),
+      );
+    } catch {
+      // Purely a reference panel — a failure here shouldn't block the
+      // purchase itself from opening.
+      setLinkedList(null);
+    }
   }
 
   function resetItemFields() {
@@ -321,6 +338,7 @@ export default function Purchases() {
   function handleNew() {
     setOpen(null);
     setComposingNew(true);
+    setLinkedList(null);
     setSupplier("");
     setFreight(0);
     setDiscount(0);
@@ -332,9 +350,32 @@ export default function Purchases() {
   function closeDrawer() {
     setOpen(null);
     setComposingNew(false);
+    setLinkedList(null);
     // Keep the list + filter options in sync with whatever changed inside.
     void loadPurchases();
     void loadFilterOptions();
+  }
+
+  async function handleToggleListItemPurchased(
+    idShoppingListItem: string,
+    purchased: boolean,
+  ) {
+    if (!activeStoreId || !linkedList) return;
+    try {
+      setLinkedList(
+        await updateShoppingListItem({
+          idStore: activeStoreId,
+          idShoppingList: linkedList.idShoppingList,
+          idShoppingListItem,
+          purchased,
+        }),
+      );
+    } catch (error) {
+      showError(
+        "Erro ao atualizar a lista",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    }
   }
 
   async function openPurchase(purchase: Purchase) {
@@ -410,6 +451,22 @@ export default function Purchases() {
   const stockQty = round2(itemQty * itemFactor);
   const costPerMeasure = itemFactor > 0 ? round6(itemPrice / itemFactor) : 0;
 
+  function brandForProduct(idProduct: string): string | null {
+    return products.find((p) => p.idProduct === idProduct)?.brand ?? null;
+  }
+
+  // Base-unit equivalent of what was actually bought for this product on
+  // *this* purchase — `baseQuantity` is only frozen once finalized, so
+  // before that this derives it live (purchasedQuantity × conversionFactor),
+  // same as the purchase preview does elsewhere on this screen.
+  function purchasedQuantityFor(idProduct: string): number | null {
+    const item = open?.items.find((i) => i.idProduct === idProduct);
+    if (!item) return null;
+    return item.baseQuantity > 0
+      ? item.baseQuantity
+      : item.purchasedQuantity * item.conversionFactor;
+  }
+
   // Products already on the purchase are hidden from the picker — one product,
   // one line (same rule as recipes).
   const availableProducts = useMemo(() => {
@@ -468,6 +525,16 @@ export default function Purchases() {
       setComposingNew(false);
       syncHeaderFields(updated);
       resetItemFields();
+      // Auto-tick the matching line on the linked shopping list, if any.
+      const matchingListItem = linkedList?.items.find(
+        (item) => item.idProduct === itemProduct && !item.purchased,
+      );
+      if (matchingListItem) {
+        await handleToggleListItemPurchased(
+          matchingListItem.idShoppingListItem,
+          true,
+        );
+      }
     } catch (error) {
       showError(
         "Erro ao adicionar item",
@@ -480,6 +547,11 @@ export default function Purchases() {
 
   async function handleRemoveItem(idPurchaseItem: string) {
     if (!activeStoreId || !open || open.status !== "RASCUNHO") return;
+    // Captured before removal — the line (and its idProduct) is gone from
+    // `open.items` once the request succeeds.
+    const removedItem = open.items.find(
+      (item) => item.idPurchaseItem === idPurchaseItem,
+    );
     try {
       setOpen(
         await removePurchaseItem(
@@ -488,6 +560,15 @@ export default function Purchases() {
           idPurchaseItem,
         ),
       );
+      const matchingListItem = linkedList?.items.find(
+        (item) => item.idProduct === removedItem?.idProduct && item.purchased,
+      );
+      if (matchingListItem) {
+        await handleToggleListItemPurchased(
+          matchingListItem.idShoppingListItem,
+          false,
+        );
+      }
     } catch (error) {
       showError(
         "Erro ao remover item",
@@ -902,6 +983,68 @@ export default function Purchases() {
                 </div>
               </div>
             </SectionCard>
+
+            {linkedList && (
+              <SectionCard
+                title="Lista de compras vinculada"
+                description={linkedList.name ?? undefined}
+              >
+                <p className="mb-3 text-[12px] text-ink-muted">
+                  Apenas uma referência — os itens abaixo precisam ser
+                  adicionados manualmente, como qualquer item de compra. A
+                  marcação é automática: acontece ao adicionar um produto
+                  correspondente na compra, e desfaz ao removê-lo.
+                </p>
+                <ul className="divide-y divide-hairline rounded-lg border border-hairline">
+                  {linkedList.items.map((item) => {
+                    const bought = purchasedQuantityFor(item.idProduct);
+                    return (
+                      <li
+                        key={item.idShoppingListItem}
+                        className="flex items-start justify-between gap-3 px-3 py-2.5"
+                      >
+                        <div className="flex min-w-0 items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={item.purchased}
+                            disabled
+                            readOnly
+                            className="mt-0.5 h-4 w-4 shrink-0 rounded border-hairline-strong"
+                          />
+                          <div className="min-w-0">
+                            <p
+                              className={`text-[13px] ${item.purchased ? "text-ink-subtle line-through" : "text-ink"}`}
+                            >
+                              {item.productName}
+                              {brandForProduct(item.idProduct)
+                                ? ` · ${brandForProduct(item.idProduct)}`
+                                : ""}
+                            </p>
+                            {item.note && (
+                              <p className="text-[11px] text-ink-subtle">
+                                {item.note}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right text-[12px] tabular-nums">
+                          <p className="text-ink-subtle">
+                            Cotado: {item.desiredQuantity} {item.unit}
+                          </p>
+                          <p
+                            className={
+                              bought !== null ? "text-ink" : "text-ink-subtle"
+                            }
+                          >
+                            Comprado: {bought ?? "—"} {item.unit}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </SectionCard>
+            )}
 
             {isDraft && (
               <SectionCard title="Adicionar item">
