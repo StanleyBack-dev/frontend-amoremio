@@ -197,3 +197,8 @@ export const CANCEL_PRODUCTION_ORDER_MUTATION = orderMutation(
   "cancelProductionOrder",
   "ProductionOrderScopeInputDto",
 );
+export const SYNC_PRODUCTION_ORDER_WITH_RECIPE_MUTATION = orderMutation(
+  "SyncProductionOrderWithRecipe",
+  "syncProductionOrderWithRecipe",
+  "ProductionOrderScopeInputDto",
+);

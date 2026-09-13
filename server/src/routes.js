@@ -11,6 +11,7 @@ import {
 } from "./modules/production/routes.js";
 import purchasingRoutes from "./modules/purchasing/routes.js";
 import salesRoutes from "./modules/sales/routes.js";
+import shoppingListRoutes from "./modules/shopping-list/routes.js";
 import storesRoutes from "./modules/stores/routes.js";
 import suppliersRoutes from "./modules/suppliers/routes.js";
 import usersRoutes from "./modules/users/routes.js";
@@ -29,6 +30,7 @@ router.use("/brands", brandsRoutes);
 router.use("/suppliers", suppliersRoutes);
 router.use("/inventory", inventoryRoutes);
 router.use("/purchases", purchasingRoutes);
+router.use("/shopping-lists", shoppingListRoutes);
 router.use("/recipes", recipesRouter);
 router.use("/production-orders", productionOrdersRouter);
 router.use("/sales-orders", salesRoutes);

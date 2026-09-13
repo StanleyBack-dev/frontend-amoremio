@@ -22,7 +22,11 @@ import { useTablePagination } from "@/shared/pagination/useTablePagination";
 import { useToast } from "@/shared/toast/useToast";
 import { useLoading } from "@/shared/loading";
 import { useStoreContext } from "@/features/stores";
-import { fetchProducts, productOptionLabel } from "@/features/catalog";
+import {
+  fetchProducts,
+  productOptionLabel,
+  SELLABLE_KINDS,
+} from "@/features/catalog";
 import { fetchStoreStock } from "@/features/inventory";
 import { formatDateTimeDisplay } from "@/utils/format";
 import type { Product } from "@/api/catalog/schema";
@@ -162,12 +166,16 @@ export default function Sales() {
           idStore: activeStoreId,
           limit: 500,
           status: true,
-          kinds: ["PRODUTO_FINAL"],
+          // Finished goods AND sale-only items (brindes, embalagens avulsas…)
+          // — anything a recipe can't consume/produce, see RECIPE_INPUT/
+          // OUTPUT_KINDS. Purchasable inputs are excluded on the backend too.
+          kinds: SELLABLE_KINDS,
         }),
+        // No `kind` filter: SELLABLE_KINDS spans two product kinds, and the
+        // stock endpoint only filters by one at a time.
         fetchStoreStock({
           idStore: activeStoreId,
-          kind: "PRODUTO_FINAL",
-          limit: 200,
+          limit: 500,
         }),
       ]);
       setOrders(orderResult.items);
@@ -222,8 +230,8 @@ export default function Sales() {
     syncHeader(fresh);
   }
 
-  // Only finished goods that actually have stock can be sold — selling more
-  // than is on hand is a hard error on the backend anyway.
+  // Only sellable products that actually have stock can be sold — selling
+  // more than is on hand is a hard error on the backend anyway.
   const sellableProducts = useMemo(
     () =>
       products.filter(

@@ -11,6 +11,7 @@ export {
   profileRoutePaths,
   routePaths,
   settingsRoutePaths,
+  shoppingListRoutePaths,
   storeRoutePaths,
   supplierRoutePaths,
   termsOfUseRoutePaths,

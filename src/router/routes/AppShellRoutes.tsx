@@ -13,6 +13,7 @@ import {
   salesRoutePaths,
   profileRoutePaths,
   settingsRoutePaths,
+  shoppingListRoutePaths,
   storeRoutePaths,
   supplierRoutePaths,
   termsOfUseRoutePaths,
@@ -26,6 +27,9 @@ const Brands = lazy(() => import("../../pages/brands/Brands"));
 const Suppliers = lazy(() => import("../../pages/suppliers/Suppliers"));
 const Recipes = lazy(() => import("../../pages/recipes/Recipes"));
 const Inventory = lazy(() => import("../../pages/inventory/Inventory"));
+const ShoppingList = lazy(
+  () => import("../../pages/shopping-list/ShoppingList"),
+);
 const Purchases = lazy(() => import("../../pages/purchases/Purchases"));
 const Production = lazy(() => import("../../pages/production/Production"));
 const Sales = lazy(() => import("../../pages/sales/Sales"));
@@ -77,6 +81,10 @@ export function AppShellRoutes({ userId }: AppShellRoutesProps) {
       <Route
         path={inventoryRoutePaths.list}
         element={withPageSuspense(<Inventory />)}
+      />
+      <Route
+        path={shoppingListRoutePaths.list}
+        element={withPageSuspense(<ShoppingList />)}
       />
       <Route
         path={purchaseRoutePaths.list}
