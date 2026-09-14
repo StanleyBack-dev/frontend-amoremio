@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Plus } from "lucide-react";
 import Button from "@atoms/Button";
 import Input from "@atoms/Input";
@@ -14,7 +21,7 @@ import Drawer from "@/components/organisms/Drawer";
 import Modal from "@/components/organisms/Modal";
 import ConfirmDialog from "@/components/molecules/ConfirmDialog";
 import DocumentField from "@/components/molecules/DocumentField";
-import { formatDateTimeDisplay } from "@/utils/format";
+import { formatDateOnlyDisplay, formatDateTimeDisplay } from "@/utils/format";
 import { useTablePagination } from "@/shared/pagination/useTablePagination";
 import { useToast } from "@/shared/toast/useToast";
 import { useLoading } from "@/shared/loading";
@@ -752,6 +759,115 @@ export default function Purchases() {
     : (open?.total ?? 0);
   const purchasableKindOptions = PURCHASABLE_KINDS;
 
+  function renderPurchaseDetails(purchase: Purchase) {
+    const info: [string, ReactNode][] = [
+      ["Fornecedor", purchase.supplierName ?? "—"],
+      ["Data da compra", formatDateOnlyDisplay(purchase.purchaseDate)],
+      ["Criado por", purchase.createdByUserName ?? "—"],
+      ["Criado em", formatDateTimeDisplay(purchase.createdAt)],
+      [
+        "Finalizado em",
+        purchase.finalizedAt
+          ? formatDateTimeDisplay(purchase.finalizedAt)
+          : "—",
+      ],
+    ];
+    const totals: [string, ReactNode][] = [
+      ["Subtotal dos itens", brl(purchase.itemsSubtotal)],
+      ["Frete", brl(purchase.freightAmount)],
+      [
+        purchase.discountMode === "PERCENTUAL"
+          ? `Desconto (${purchase.discountPercent}%)`
+          : "Desconto",
+        `− ${brl(purchase.discountAmount)}`,
+      ],
+      ["Total", brl(purchase.total)],
+    ];
+
+    const sectionHead =
+      "bg-shell px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.07em] text-cream-muted";
+    const th = `${sectionHead} text-left`;
+
+    return (
+      <div className="overflow-hidden rounded-lg border border-hairline bg-card">
+        <div className={sectionHead}>Detalhes da compra</div>
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 px-4 py-3 sm:grid-cols-3 lg:grid-cols-4">
+          {info.map(([label, value]) => (
+            <div key={label} className="flex flex-col gap-0.5">
+              <dt className="text-[10px] font-medium uppercase tracking-wide text-ink-subtle">
+                {label}
+              </dt>
+              <dd className="text-[13px] text-ink">{value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <table className="w-full border-t border-hairline text-[12px]">
+          <thead>
+            <tr>
+              <th className={th}>Produto</th>
+              <th className={`${th} text-right`}>Qtd. comprada</th>
+              <th className={`${th} text-right`}>Fator</th>
+              <th className={`${th} text-right`}>Valor un.</th>
+              <th className={`${th} text-right`}>Custo un. efetivo</th>
+              <th className={`${th} text-right`}>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {purchase.items.map((item) => (
+              <tr
+                key={item.idPurchaseItem}
+                className="border-t border-hairline"
+              >
+                <td className="px-4 py-2 text-ink">{item.productName}</td>
+                <td className="px-4 py-2 text-right tabular-nums text-ink">
+                  {qtyFmt(item.purchasedQuantity)} {item.purchasedUnit}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums text-ink">
+                  × {item.conversionFactor}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums text-ink">
+                  {brl(item.unitPrice)}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums text-ink">
+                  {unitBrl(item.effectiveUnitCost)}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums text-ink">
+                  {brl(item.lineTotal)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="flex justify-end border-t border-hairline bg-card-alt/40 px-4 py-3">
+          <dl className="w-full max-w-xs space-y-1 text-[12px]">
+            {totals.map(([label, value], index) => (
+              <div
+                key={label}
+                className={`flex justify-between gap-3 ${
+                  index === totals.length - 1
+                    ? "border-t border-hairline pt-1 font-semibold text-ink"
+                    : "text-ink-muted"
+                }`}
+              >
+                <dt>{label}</dt>
+                <dd className="tabular-nums">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        {purchase.notes && (
+          <p className="border-t border-hairline px-4 py-3 text-[12px] text-ink-muted">
+            <span className="font-medium text-ink">Observações: </span>
+            {purchase.notes}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <SectionCard
@@ -827,6 +943,8 @@ export default function Purchases() {
           }
           onView={openPurchase}
           viewLabel="Abrir compra"
+          canExpand={(row) => row.status === "FINALIZADA"}
+          renderExpanded={(row) => renderPurchaseDetails(row)}
           columns={[
             {
               key: "supplierName",

@@ -74,6 +74,7 @@ export interface ListStockMovementsParams {
   idStore: string;
   idProduct?: string;
   type?: string;
+  sourceId?: string;
   page?: number;
   limit?: number;
 }
