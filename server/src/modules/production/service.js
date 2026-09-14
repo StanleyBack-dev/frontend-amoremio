@@ -7,6 +7,7 @@ import {
   COMPLETE_PRODUCTION_ORDER_MUTATION,
   CREATE_PRODUCTION_ORDER_MUTATION,
   CREATE_RECIPE_MUTATION,
+  DELETE_RECIPE_MUTATION,
   GET_PRODUCTION_ORDER_BY_ID_QUERY,
   GET_PRODUCTION_ORDER_FILTER_OPTIONS_QUERY,
   GET_RECIPE_BY_ID_QUERY,
@@ -104,6 +105,17 @@ export const updateRecipeItem = (input, ctx, rid) =>
   runMutation(UPDATE_RECIPE_ITEM_MUTATION, "updateRecipeItem", input, ctx, rid);
 export const removeRecipeItem = (input, ctx, rid) =>
   runMutation(REMOVE_RECIPE_ITEM_MUTATION, "removeRecipeItem", input, ctx, rid);
+
+// No `data` payload to unwrap — just the success envelope itself.
+export const deleteRecipe = (input, ctx, rid) =>
+  runQuery(
+    DELETE_RECIPE_MUTATION,
+    "deleteRecipe",
+    input,
+    ctx,
+    rid,
+    "Invalid deleteRecipe response.",
+  );
 
 export const createProductionOrder = (input, ctx, rid) =>
   runMutation(

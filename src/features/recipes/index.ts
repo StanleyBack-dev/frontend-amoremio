@@ -2,6 +2,7 @@ import {
   addRecipeItem as addRecipeItemRequest,
   addRecipeItems as addRecipeItemsRequest,
   createRecipe as createRecipeRequest,
+  deleteRecipe as deleteRecipeRequest,
   getRecipeById as getRecipeByIdRequest,
   getStoreRecipes as getStoreRecipesRequest,
   removeRecipeItem as removeRecipeItemRequest,
@@ -87,5 +88,10 @@ export const removeRecipeItem = async (
   idRecipeItem: string,
 ): Promise<Recipe> =>
   parse(await removeRecipeItemRequest(idStore, idRecipe, idRecipeItem));
+
+export const deleteRecipe = (
+  idStore: string,
+  idRecipe: string,
+): Promise<void> => deleteRecipeRequest(idStore, idRecipe);
 
 export type { Recipe, RecipeItem } from "@/api/recipes/schema";
