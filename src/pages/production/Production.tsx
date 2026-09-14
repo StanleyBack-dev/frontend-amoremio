@@ -44,6 +44,7 @@ import {
   fetchProductionOrderFilterOptions,
   fetchProductionOrders,
   productionOrderStatusLabel,
+  removeProductionOrderItem,
   removeProductionOrderOutput,
   removeProductionOrderOutputExtra,
   syncProductionOrderWithRecipe,
@@ -449,6 +450,30 @@ export default function Production() {
     }
   }
 
+  // Drops one shared consumption line from the draft — e.g. an ingredient
+  // the recipe lists but this specific batch won't actually use. Only the
+  // targeted line is removed; every other line's quantity stays as-is
+  // (unlike "Sincronizar com a receita", which recalculates all of them).
+  async function handleRemoveItem(idProductionOrderItem: string) {
+    if (!activeStoreId || !open) return;
+    setBusy(true);
+    try {
+      const updated = await removeProductionOrderItem(
+        activeStoreId,
+        open.idProductionOrder,
+        idProductionOrderItem,
+      );
+      setOpen(updated);
+    } catch (error) {
+      showError(
+        "Erro ao remover insumo",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function updateExtraStaging(
     idProductionOrderOutput: string,
     patch: Partial<StagingExtra>,
@@ -697,6 +722,7 @@ export default function Production() {
     if (!preview) return [];
     const sharedRows = preview.lines.map((line) => ({
       key: `item-${line.idProductionOrderItem}`,
+      idProductionOrderItem: line.idProductionOrderItem as string | null,
       productName: line.productName,
       quantity: line.quantity,
       unit: line.unit,
@@ -706,6 +732,7 @@ export default function Production() {
     const extraRows = outputLinePreview.flatMap((line) =>
       line.extraLines.map((extra) => ({
         key: `extra-${extra.idProductionOrderOutputExtra}`,
+        idProductionOrderItem: null as string | null,
         productName: `${extra.productName} (extra · ${line.productName})`,
         quantity: extra.quantity,
         unit:
@@ -1568,6 +1595,29 @@ export default function Production() {
                     className: "text-right tabular-nums",
                     render: (row) => brl(row.lineCost),
                   },
+                  ...(isDraft
+                    ? [
+                        {
+                          key: "actions",
+                          label: "",
+                          className: "text-right",
+                          render: (row: (typeof insumosPreviewRows)[number]) =>
+                            row.idProductionOrderItem ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={busy || preview.lines.length <= 1}
+                                className="!text-err-fg hover:!bg-err-bg"
+                                onClick={() =>
+                                  handleRemoveItem(row.idProductionOrderItem!)
+                                }
+                              >
+                                Remover
+                              </Button>
+                            ) : null,
+                        },
+                      ]
+                    : []),
                 ]}
               />
 

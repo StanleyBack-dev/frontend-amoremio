@@ -8,6 +8,7 @@ import {
   getProductionOrderById as getProductionOrderByIdRequest,
   getStoreProductionOrderFilterOptions as getStoreProductionOrderFilterOptionsRequest,
   getStoreProductionOrders as getStoreProductionOrdersRequest,
+  removeProductionOrderItem as removeProductionOrderItemRequest,
   removeProductionOrderOutput as removeProductionOrderOutputRequest,
   removeProductionOrderOutputExtra as removeProductionOrderOutputExtraRequest,
   syncProductionOrderWithRecipe as syncProductionOrderWithRecipeRequest,
@@ -92,6 +93,19 @@ export const completeProductionOrder = async (
   idProductionOrder: string,
 ): Promise<ProductionOrder> =>
   parse(await completeProductionOrderRequest(idStore, idProductionOrder));
+
+export const removeProductionOrderItem = async (
+  idStore: string,
+  idProductionOrder: string,
+  idProductionOrderItem: string,
+): Promise<ProductionOrder> =>
+  parse(
+    await removeProductionOrderItemRequest(
+      idStore,
+      idProductionOrder,
+      idProductionOrderItem,
+    ),
+  );
 
 export const addProductionOrderOutput = async (
   idStore: string,

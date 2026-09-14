@@ -98,6 +98,22 @@ export async function completeProductionOrder(
   }
 }
 
+export async function removeProductionOrderItem(
+  idStore: string,
+  idProductionOrder: string,
+  idProductionOrderItem: string,
+): Promise<ProductionOrder> {
+  try {
+    const response = await apiHttp.delete<ProductionOrder>(
+      `/production-orders/${idProductionOrder}/items/${idProductionOrderItem}`,
+      { params: { idStore } },
+    );
+    return response.data;
+  } catch (error) {
+    throw fail(error, "Não foi possível remover o insumo.");
+  }
+}
+
 export async function addProductionOrderOutput(
   idStore: string,
   idProductionOrder: string,

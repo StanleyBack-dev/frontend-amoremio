@@ -17,6 +17,7 @@ import {
   listProductionOrderFilterOptions,
   listProductionOrders,
   listRecipes,
+  removeProductionOrderItem,
   removeProductionOrderOutput,
   removeProductionOrderOutputExtra,
   removeRecipeItem,
@@ -227,6 +228,21 @@ productionOrdersRouter.post(
       {
         idStore: req.body?.idStore,
         idProductionOrder: req.params.idProductionOrder,
+      },
+      getAuthContext(req),
+      req.requestId,
+    ),
+  ),
+);
+
+productionOrdersRouter.delete(
+  "/:idProductionOrder/items/:idProductionOrderItem",
+  handle((req) =>
+    removeProductionOrderItem(
+      {
+        idStore: req.query.idStore,
+        idProductionOrder: req.params.idProductionOrder,
+        idProductionOrderItem: req.params.idProductionOrderItem,
       },
       getAuthContext(req),
       req.requestId,
