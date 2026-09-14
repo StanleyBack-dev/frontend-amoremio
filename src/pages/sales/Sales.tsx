@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Receipt } from "lucide-react";
 import Button from "@atoms/Button";
 import Input from "@atoms/Input";
 import CurrencyInput from "@atoms/CurrencyInput";
@@ -27,8 +28,9 @@ import {
   productOptionLabel,
   SELLABLE_KINDS,
 } from "@/features/catalog";
-import { fetchStoreStock } from "@/features/inventory";
-import { formatDateTimeDisplay } from "@/utils/format";
+import { fetchStoreStock, fetchStockMovements } from "@/features/inventory";
+import type { StockMovement } from "@/api/inventory/schema";
+import { formatDateOnlyDisplay, formatDateTimeDisplay } from "@/utils/format";
 import type { Product } from "@/api/catalog/schema";
 import type {
   ListSalesOrdersParams,
@@ -104,9 +106,23 @@ export default function Sales() {
   const [channel, setChannel] = useState<SalesChannel>("BALCAO");
   const [commission, setCommission] = useState(0);
 
+  // Calculator: derives discountAmount/commissionPercent from what the
+  // delivery platform's statement actually reports (a promo discount and
+  // the net amount deposited), instead of the user reverse-engineering the
+  // commission percentage by hand. "Aplicar" fills the fields above and
+  // saves immediately, same as every other field in this section.
+  const [calcDiscount, setCalcDiscount] = useState(0);
+  const [calcNetReceived, setCalcNetReceived] = useState(0);
+
   const [itemProduct, setItemProduct] = useState("");
   const [itemQty, setItemQty] = useState(0);
   const [itemPrice, setItemPrice] = useState(0);
+
+  const [statementOrder, setStatementOrder] = useState<SalesOrder | null>(null);
+  const [statementMovements, setStatementMovements] = useState<StockMovement[]>(
+    [],
+  );
+  const [statementLoading, setStatementLoading] = useState(false);
 
   const [confirm, setConfirm] = useState<PendingConfirm>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
@@ -215,6 +231,28 @@ export default function Sales() {
     void loadFilterOptions();
   }, [loadFilterOptions]);
 
+  // Mirrors the calculator's derived values into Desconto/Comissão live, as
+  // the user types — the whole point of the calculator is to skip doing this
+  // math by hand, not to require a second step to bring it into the form.
+  // Guarded to a no-op while both calculator fields are untouched (0), so it
+  // doesn't stomp on values typed directly into Desconto/Comissão instead.
+  // Self-contained (recomputes off `open` rather than reading the later
+  // isOpen/calcCommissionPercent consts) so it can sit with the other hooks,
+  // ahead of the early "no active store" return below.
+  useEffect(() => {
+    const stillOpen = composingNew || open?.status === "ABERTA";
+    if (!stillOpen) return;
+    if (calcDiscount === 0 && calcNetReceived === 0) return;
+    const subtotal = open?.itemsSubtotal ?? 0;
+    const total = Math.max(0, round2(subtotal - calcDiscount));
+    const commissionAmount = Math.max(0, round2(total - calcNetReceived));
+    const commissionPercent =
+      total > 0 ? round2((commissionAmount / total) * 100) : 0;
+    setDiscountMode("VALOR");
+    setDiscount(calcDiscount);
+    setCommission(commissionPercent);
+  }, [calcDiscount, calcNetReceived, composingNew, open]);
+
   function syncHeader(order: SalesOrder) {
     setCustomer(order.customerName ?? "");
     setOrderDate(order.orderDate.slice(0, 10));
@@ -223,6 +261,8 @@ export default function Sales() {
     setDiscountPercent(order.discountPercent ?? 0);
     setChannel(order.salesChannel);
     setCommission(order.commissionPercent ?? 0);
+    setCalcDiscount(0);
+    setCalcNetReceived(0);
   }
 
   async function refreshOpen(idSalesOrder: string) {
@@ -230,6 +270,38 @@ export default function Sales() {
     const fresh = await track(fetchSalesOrderById(activeStoreId, idSalesOrder));
     setOpen(fresh);
     syncHeader(fresh);
+  }
+
+  // Confirming a sale is what debits stock (SAIDA_VENDA), and that movement
+  // carries the average product cost at that exact moment — the only place
+  // the real cost-of-goods for this sale is recorded. Reading it back here
+  // is what lets the statement show real margin instead of a guess based on
+  // today's (possibly very different) average cost.
+  async function openStatement(order: SalesOrder) {
+    setStatementOrder(order);
+    if (!activeStoreId) return;
+    setStatementLoading(true);
+    try {
+      const result = await fetchStockMovements({
+        idStore: activeStoreId,
+        sourceId: order.idSalesOrder,
+        limit: 100,
+      });
+      setStatementMovements(result.items);
+    } catch (error) {
+      showError(
+        "Erro ao carregar o extrato",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+      setStatementMovements([]);
+    } finally {
+      setStatementLoading(false);
+    }
+  }
+
+  function closeStatement() {
+    setStatementOrder(null);
+    setStatementMovements([]);
   }
 
   // Only sellable products that actually have stock can be sold — selling
@@ -260,6 +332,8 @@ export default function Sales() {
     setDiscountPercent(0);
     setChannel("BALCAO");
     setCommission(0);
+    setCalcDiscount(0);
+    setCalcNetReceived(0);
     setItemProduct("");
     setItemQty(0);
     setItemPrice(0);
@@ -272,11 +346,14 @@ export default function Sales() {
     void loadFilterOptions();
   }
 
-  // `next` lets the R$/% selector persist its just-picked value without
-  // waiting for the state update.
+  // `next` lets a field persist its just-picked value immediately, without
+  // waiting for the state update to flush (needed for the R$/% selector and
+  // the calculator's "Aplicar", neither of which fires a blur event).
   async function saveHeader(next?: {
     discountMode?: SalesDiscountMode;
     discountPercent?: number;
+    discount?: number;
+    commission?: number;
   }) {
     if (!activeStoreId || !open) return;
     try {
@@ -284,16 +361,12 @@ export default function Sales() {
         idStore: activeStoreId,
         idSalesOrder: open.idSalesOrder,
         customerName: customer.trim(),
-        discountAmount: discount,
+        discountAmount: next?.discount ?? discount,
         discountMode: next?.discountMode ?? discountMode,
         discountPercent: next?.discountPercent ?? discountPercent,
         salesChannel: channel,
-        commissionPercent: commission,
+        commissionPercent: next?.commission ?? commission,
       });
-      // Only refresh the computed side (subtotal/total/commission). The
-      // input-bound fields already hold what the user just typed — re-syncing
-      // them from the response would fight edits and, if an older BFF/back end
-      // omits a field, silently revert it.
       setOpen(updated);
     } catch (error) {
       showError(
@@ -518,13 +591,31 @@ export default function Sales() {
       : discount
     : (open?.discountAmount ?? 0);
   const totalShown = Math.max(0, subtotalShown - discountShown);
+  const channelShown = isOpen ? channel : (open?.salesChannel ?? channel);
+  const commissionPercentShown = isOpen
+    ? commission
+    : (open?.commissionPercent ?? 0);
+  const commissionAmountShown = isOpen
+    ? round2(totalShown * (commissionPercentShown / 100))
+    : (open?.commissionAmount ?? 0);
+  const netTotalShown = isOpen
+    ? Math.max(0, round2(totalShown - commissionAmountShown))
+    : (open?.netTotal ?? 0);
+
+  // What a full-price statement calls "total" once the platform's own promo
+  // discount is taken out — the commission % the platform actually charged
+  // is back-solved from the gap between that and what it deposited.
+  const calcTotal = Math.max(0, round2(subtotalShown - calcDiscount));
+  const calcCommissionAmount = Math.max(0, round2(calcTotal - calcNetReceived));
+  const calcCommissionPercent =
+    calcTotal > 0 ? round2((calcCommissionAmount / calcTotal) * 100) : 0;
 
   // Read-only detail panel shown when a confirmed sale's row is expanded.
   function renderSaleDetails(order: SalesOrder) {
     const info: [string, ReactNode][] = [
       ["Cliente", order.customerName ?? "—"],
       ["Canal", salesChannelLabel[order.salesChannel]],
-      ["Data do pedido", new Date(order.orderDate).toLocaleDateString("pt-BR")],
+      ["Data do pedido", formatDateOnlyDisplay(order.orderDate)],
       ["Criado por", order.createdByUserName ?? "—"],
       ["Criado em", formatDateTimeDisplay(order.createdAt)],
       [
@@ -626,6 +717,283 @@ export default function Sales() {
     );
   }
 
+  const productKindLabel: Record<string, string> = {
+    PRODUTO_FINAL: "Receita",
+    REVENDA: "Revenda",
+    INSUMO: "Insumo",
+    INTERMEDIARIO: "Intermediário",
+  };
+  const productKindTone: Record<string, "info" | "gold" | "neutral"> = {
+    PRODUTO_FINAL: "info",
+    REVENDA: "gold",
+  };
+
+  // Full profit/margin statement for a confirmed sale, opened from the
+  // "Extrato" icon. Confirming a sale debits stock (SAIDA_VENDA), and that
+  // movement snapshots the product's average cost at that exact moment —
+  // the only place the real cost-of-goods for this sale lives, for both
+  // recipe-made items (PRODUTO_FINAL) and resale items (REVENDA). Reading
+  // it back here is what makes the margin numbers reflect what actually
+  // happened, not today's (possibly very different) average cost.
+  function renderStatement() {
+    const order = statementOrder;
+    if (!order) return null;
+
+    const costByProduct = new Map(
+      statementMovements
+        .filter((movement) => movement.type === "SAIDA_VENDA")
+        .map((movement) => [movement.idProduct, movement.unitCost]),
+    );
+
+    const lines = order.items.map((item) => {
+      const unitCost = costByProduct.get(item.idProduct);
+      const hasCost = unitCost != null;
+      const lineCost = hasCost ? unitCost * item.quantity : null;
+      const lineProfit = hasCost ? item.lineTotal - lineCost! : null;
+      const lineMarginPct =
+        lineProfit != null && item.lineTotal > 0
+          ? (lineProfit / item.lineTotal) * 100
+          : null;
+      return { item, unitCost, lineCost, lineProfit, lineMarginPct, hasCost };
+    });
+
+    const allCostsKnown = lines.length > 0 && lines.every((l) => l.hasCost);
+    const totalCost = allCostsKnown
+      ? lines.reduce((sum, l) => sum + (l.lineCost ?? 0), 0)
+      : null;
+    const grossProfit = totalCost != null ? order.total - totalCost : null;
+    const grossMarginPct =
+      grossProfit != null && order.total > 0
+        ? (grossProfit / order.total) * 100
+        : null;
+    const netProfit = totalCost != null ? order.netTotal - totalCost : null;
+    const netMarginPct =
+      netProfit != null && order.netTotal > 0
+        ? (netProfit / order.netTotal) * 100
+        : null;
+    const netVsGrossDiff = order.total - order.netTotal;
+    const hasCommission =
+      order.commissionAmount > 0 || order.commissionPercent > 0;
+
+    const info: [string, ReactNode][] = [
+      ["Cliente", order.customerName ?? "—"],
+      ["Canal", salesChannelLabel[order.salesChannel]],
+      ["Data do pedido", formatDateOnlyDisplay(order.orderDate)],
+      ["Criado por", order.createdByUserName ?? "—"],
+      ["Criado em", formatDateTimeDisplay(order.createdAt)],
+      [
+        "Confirmado em",
+        order.confirmedAt ? formatDateTimeDisplay(order.confirmedAt) : "—",
+      ],
+    ];
+
+    const financials: {
+      label: string;
+      value: string;
+      emphasis?: boolean;
+      negative?: boolean;
+    }[] = [
+      { label: "Subtotal (bruto)", value: brl(order.itemsSubtotal) },
+      {
+        label:
+          order.discountMode === "PERCENTUAL"
+            ? `Desconto (${order.discountPercent}%)`
+            : "Desconto",
+        value: `− ${brl(order.discountAmount)}`,
+      },
+      {
+        label: "Total (após desconto)",
+        value: brl(order.total),
+        emphasis: true,
+      },
+    ];
+    if (hasCommission) {
+      financials.push({
+        label: `Comissão ${salesChannelLabel[order.salesChannel]} (${order.commissionPercent.toFixed(2)}%)`,
+        value: `− ${brl(order.commissionAmount)}`,
+      });
+      financials.push({
+        label: "Total líquido",
+        value: brl(order.netTotal),
+        emphasis: true,
+      });
+      financials.push({
+        label: "Diferença líquido × bruto",
+        value: `− ${brl(netVsGrossDiff)}`,
+      });
+    }
+    financials.push({
+      label: "Custo dos produtos (CMV)",
+      value: totalCost != null ? brl(totalCost) : "indisponível",
+    });
+    financials.push({
+      label: "Lucro bruto (antes da comissão)",
+      value: grossProfit != null ? brl(grossProfit) : "—",
+      negative: grossProfit != null && grossProfit < 0,
+    });
+    financials.push({
+      label: "Margem bruta",
+      value: grossMarginPct != null ? `${grossMarginPct.toFixed(1)}%` : "—",
+      negative: grossMarginPct != null && grossMarginPct < 0,
+    });
+    if (hasCommission) {
+      financials.push({
+        label: "Lucro líquido (após comissão)",
+        value: netProfit != null ? brl(netProfit) : "—",
+        emphasis: true,
+        negative: netProfit != null && netProfit < 0,
+      });
+      financials.push({
+        label: "Margem líquida",
+        value: netMarginPct != null ? `${netMarginPct.toFixed(1)}%` : "—",
+        emphasis: true,
+        negative: netMarginPct != null && netMarginPct < 0,
+      });
+    }
+
+    const sectionHead =
+      "bg-shell px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.07em] text-cream-muted";
+    const th = `${sectionHead} text-left`;
+
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="overflow-hidden rounded-lg border border-hairline bg-card">
+          <div className={sectionHead}>Detalhes da venda</div>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 px-4 py-3 sm:grid-cols-3">
+            {info.map(([label, value]) => (
+              <div key={label} className="flex flex-col gap-0.5">
+                <dt className="text-[10px] font-medium uppercase tracking-wide text-ink-subtle">
+                  {label}
+                </dt>
+                <dd className="text-[13px] text-ink">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        {statementLoading ? (
+          <p className="px-1 text-[12px] text-ink-muted">Carregando custos…</p>
+        ) : (
+          <>
+            <div className="overflow-x-auto rounded-lg border border-hairline bg-card">
+              <table className="w-full text-[12px]">
+                <thead>
+                  <tr>
+                    <th className={th}>Produto</th>
+                    <th className={th}>Tipo</th>
+                    <th className={`${th} text-right`}>Qtd.</th>
+                    <th className={`${th} text-right`}>Venda un.</th>
+                    <th className={`${th} text-right`}>Custo un.</th>
+                    <th className={`${th} text-right`}>Total venda</th>
+                    <th className={`${th} text-right`}>Custo total</th>
+                    <th className={`${th} text-right`}>Lucro</th>
+                    <th className={`${th} text-right`}>Margem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lines.map(
+                    ({
+                      item,
+                      unitCost,
+                      lineCost,
+                      lineProfit,
+                      lineMarginPct,
+                      hasCost,
+                    }) => (
+                      <tr
+                        key={item.idSalesOrderItem}
+                        className="border-t border-hairline"
+                      >
+                        <td className="px-4 py-2 text-ink">
+                          {item.productName}
+                        </td>
+                        <td className="px-4 py-2">
+                          <Badge
+                            tone={
+                              productKindTone[item.productKind] ?? "neutral"
+                            }
+                          >
+                            {productKindLabel[item.productKind] ??
+                              item.productKind}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-2 text-right tabular-nums text-ink">
+                          {qtyFmt(item.quantity)}
+                        </td>
+                        <td className="px-4 py-2 text-right tabular-nums text-ink">
+                          {brl(item.unitPrice)}
+                        </td>
+                        <td className="px-4 py-2 text-right tabular-nums text-ink">
+                          {hasCost ? brl(unitCost as number) : "—"}
+                        </td>
+                        <td className="px-4 py-2 text-right tabular-nums text-ink">
+                          {brl(item.lineTotal)}
+                        </td>
+                        <td className="px-4 py-2 text-right tabular-nums text-ink">
+                          {hasCost ? brl(lineCost as number) : "—"}
+                        </td>
+                        <td
+                          className={`px-4 py-2 text-right tabular-nums font-medium ${
+                            lineProfit != null && lineProfit < 0
+                              ? "text-err-fg"
+                              : "text-ink"
+                          }`}
+                        >
+                          {lineProfit != null ? brl(lineProfit) : "—"}
+                        </td>
+                        <td
+                          className={`px-4 py-2 text-right tabular-nums font-medium ${
+                            lineMarginPct != null && lineMarginPct < 0
+                              ? "text-err-fg"
+                              : "text-ink"
+                          }`}
+                        >
+                          {lineMarginPct != null
+                            ? `${lineMarginPct.toFixed(1)}%`
+                            : "—"}
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="overflow-hidden rounded-lg border border-hairline bg-card">
+              <div className={sectionHead}>Resultado financeiro</div>
+              <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 px-4 py-3 text-[13px] sm:grid-cols-2">
+                {financials.map((row) => (
+                  <div
+                    key={row.label}
+                    className={`flex justify-between gap-3 ${
+                      row.emphasis ? "font-semibold text-ink" : "text-ink-muted"
+                    } ${row.negative ? "!text-err-fg" : ""}`}
+                  >
+                    <dt>{row.label}</dt>
+                    <dd className="tabular-nums">{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {totalCost == null && (
+                <p className="border-t border-hairline px-4 py-2 text-[11px] text-ink-subtle">
+                  Custo indisponível para um ou mais itens — sem movimentação de
+                  estoque registrada para esta venda.
+                </p>
+              )}
+            </div>
+          </>
+        )}
+
+        {order.notes && (
+          <p className="rounded-lg border border-hairline bg-card px-4 py-3 text-[12px] text-ink-muted">
+            <span className="font-medium text-ink">Observações: </span>
+            {order.notes}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <SectionCard
@@ -713,10 +1081,29 @@ export default function Sales() {
           renderExpanded={(row) => renderSaleDetails(row)}
           columns={[
             {
+              key: "statement",
+              label: "",
+              className: "w-10",
+              render: (row) =>
+                row.status === "CONFIRMADA" ? (
+                  <button
+                    type="button"
+                    title="Ver extrato"
+                    aria-label="Ver extrato"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void openStatement(row);
+                    }}
+                    className="flex h-7 w-7 items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-card-alt hover:text-brand-600"
+                  >
+                    <Receipt size={16} />
+                  </button>
+                ) : null,
+            },
+            {
               key: "orderDate",
               label: "Data",
-              render: (row) =>
-                new Date(row.orderDate).toLocaleDateString("pt-BR"),
+              render: (row) => formatDateOnlyDisplay(row.orderDate),
             },
             {
               key: "customerName",
@@ -884,6 +1271,46 @@ export default function Sales() {
             </SectionCard>
 
             {isOpen && (
+              <SectionCard title="Calculadora de desconto e comissão">
+                <p className="mb-3 text-[12px] text-ink-muted">
+                  Copie os dois valores direto do extrato do app (iFood, 99Food
+                  etc.) — Desconto e Comissão do canal acima (e o Total/Líquido
+                  no resumo abaixo) já acompanham em tempo real enquanto você
+                  digita. Essa % junta tudo que o app descontou (comissão, taxa
+                  de pagamento, logística) num só número, porque o sistema só
+                  guarda um campo de comissão.
+                </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <CurrencyInput
+                    label="Desconto da plataforma"
+                    value={calcDiscount}
+                    onValueChange={setCalcDiscount}
+                    onBlur={() => saveHeader()}
+                    hint='"Preço dos itens sem ofertas" − "Total após descontos" no extrato. Sem promoção no pedido, deixe R$ 0,00.'
+                  />
+                  <CurrencyInput
+                    label="Valor líquido recebido"
+                    value={calcNetReceived}
+                    onValueChange={setCalcNetReceived}
+                    onBlur={() => saveHeader()}
+                    hint='"Valor do pagamento" (ou "Ganhos com o pedido") no extrato.'
+                  />
+                  <div className="flex flex-col justify-end rounded-md border border-hairline bg-card-alt px-3 py-2">
+                    <p className="text-[11px] uppercase tracking-wide text-ink-subtle">
+                      Comissão calculada
+                    </p>
+                    <p className="text-lg font-semibold text-brand-600 tabular-nums">
+                      {calcCommissionPercent.toFixed(2)}%
+                    </p>
+                    <p className="text-[11px] text-ink-subtle tabular-nums">
+                      = {brl(calcCommissionAmount)} sobre {brl(calcTotal)}
+                    </p>
+                  </div>
+                </div>
+              </SectionCard>
+            )}
+
+            {isOpen && (
               <SectionCard title="Adicionar item">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <Select
@@ -1039,21 +1466,21 @@ export default function Sales() {
                     <dt>Total</dt>
                     <dd className="tabular-nums">{brl(totalShown)}</dd>
                   </div>
-                  {(open.commissionAmount > 0 ||
-                    open.commissionPercent > 0) && (
+                  {(commissionAmountShown > 0 ||
+                    commissionPercentShown > 0) && (
                     <>
                       <div className="flex justify-between">
                         <dt className="text-ink-muted">
-                          Comissão {salesChannelLabel[open.salesChannel]} (
-                          {open.commissionPercent.toFixed(2)}%)
+                          Comissão {salesChannelLabel[channelShown]} (
+                          {commissionPercentShown.toFixed(2)}%)
                         </dt>
                         <dd className="tabular-nums">
-                          − {brl(open.commissionAmount)}
+                          − {brl(commissionAmountShown)}
                         </dd>
                       </div>
                       <div className="flex justify-between border-t border-hairline pt-1.5 text-[15px] font-semibold text-brand-600">
                         <dt>Total líquido</dt>
-                        <dd className="tabular-nums">{brl(open.netTotal)}</dd>
+                        <dd className="tabular-nums">{brl(netTotalShown)}</dd>
                       </div>
                     </>
                   )}
@@ -1081,6 +1508,16 @@ export default function Sales() {
             </SectionCard>
           </div>
         )}
+      </Drawer>
+
+      <Drawer
+        open={!!statementOrder}
+        onClose={closeStatement}
+        width="xl"
+        title="Extrato da venda"
+        subtitle={statementOrder?.customerName ?? undefined}
+      >
+        {renderStatement()}
       </Drawer>
 
       <ConfirmDialog

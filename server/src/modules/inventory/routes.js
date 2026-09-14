@@ -48,6 +48,7 @@ router.get("/movements", async (req, res) => {
           idStore: req.query.idStore,
           idProduct: req.query.idProduct || undefined,
           type: req.query.type || undefined,
+          sourceId: req.query.sourceId || undefined,
           page: req.query.page ? Number(req.query.page) : undefined,
           limit: req.query.limit ? Number(req.query.limit) : undefined,
         },

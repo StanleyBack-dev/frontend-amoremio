@@ -278,6 +278,21 @@ export function formatDateTimeDisplay(value?: string): string {
   }).format(parsedDate);
 }
 
+// For genuine date-only fields (orderDate, purchaseDate, productionDate…) —
+// GraphQL's Date scalar serializes these as a full UTC-midnight ISO string
+// (e.g. "2026-09-12T00:00:00.000Z"), not a bare "2026-09-12". Routing that
+// through Date/Intl with DISPLAY_TIME_ZONE — as formatDateDisplay does for
+// genuine timestamps — converts the UTC instant to Brasília's wall clock and
+// rolls the calendar day back by one, since Brasília is always behind UTC.
+// These values carry no meaningful time component, so always read the
+// calendar date straight from the string and skip Date/Intl entirely.
+export function formatDateOnlyDisplay(value?: string): string {
+  if (!value) return "";
+  const [year, month, day] = value.slice(0, 10).split("-");
+  if (!year || !month || !day) return value;
+  return formatDateParts(day, month, year);
+}
+
 // Groups typed hex characters into UUID shape (8-4-4-4-12) as the user types.
 export function formatPixEvpKey(value: string): string {
   const chars = value

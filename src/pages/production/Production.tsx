@@ -17,7 +17,7 @@ import { useLoading } from "@/shared/loading";
 import { useStoreContext } from "@/features/stores";
 import { fetchStoreStock } from "@/features/inventory";
 import { fetchRecipes } from "@/features/recipes";
-import { formatDateTimeDisplay } from "@/utils/format";
+import { formatDateOnlyDisplay, formatDateTimeDisplay } from "@/utils/format";
 import type { Recipe } from "@/api/recipes/schema";
 import type { StockItem } from "@/api/inventory/schema";
 import type {
@@ -510,8 +510,7 @@ export default function Production() {
             {
               key: "productionDate",
               label: "Data",
-              render: (row) =>
-                new Date(row.productionDate).toLocaleDateString("pt-BR"),
+              render: (row) => formatDateOnlyDisplay(row.productionDate),
             },
             { key: "recipeName", label: "Receita" },
             {
