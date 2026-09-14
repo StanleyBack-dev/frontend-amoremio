@@ -16,6 +16,7 @@ import {
   GET_RECIPE_BY_ID_QUERY,
   GET_STORE_PRODUCTION_ORDERS_QUERY,
   GET_STORE_RECIPES_QUERY,
+  REMOVE_PRODUCTION_ORDER_ITEM_MUTATION,
   REMOVE_PRODUCTION_ORDER_OUTPUT_EXTRA_MUTATION,
   REMOVE_PRODUCTION_ORDER_OUTPUT_MUTATION,
   REMOVE_RECIPE_ITEM_MUTATION,
@@ -198,6 +199,14 @@ export const removeProductionOrderOutputExtra = (input, ctx, rid) =>
   runMutation(
     REMOVE_PRODUCTION_ORDER_OUTPUT_EXTRA_MUTATION,
     "removeProductionOrderOutputExtra",
+    input,
+    ctx,
+    rid,
+  );
+export const removeProductionOrderItem = (input, ctx, rid) =>
+  runMutation(
+    REMOVE_PRODUCTION_ORDER_ITEM_MUTATION,
+    "removeProductionOrderItem",
     input,
     ctx,
     rid,

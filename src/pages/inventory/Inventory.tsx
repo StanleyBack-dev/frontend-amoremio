@@ -13,6 +13,7 @@ import Drawer from "@/components/organisms/Drawer";
 import { useTablePagination } from "@/shared/pagination/useTablePagination";
 import { useToast } from "@/shared/toast/useToast";
 import { useStoreContext } from "@/features/stores";
+import { formatDateOnlyDisplay, formatDateTimeDisplay } from "@/utils/format";
 import {
   fetchProductFilterOptions,
   fetchProducts,
@@ -45,6 +46,15 @@ const emptyFilters = {
 };
 
 const emptyMoveFilters = { product: "", type: "" };
+
+// Movement types sourced from a business-date field (purchase/sale/production
+// date) rather than a real "now()" instant — see occurredAt display note below.
+const DATE_ONLY_MOVEMENT_TYPES = new Set<StockMovement["type"]>([
+  "ENTRADA_COMPRA",
+  "SAIDA_VENDA",
+  "SAIDA_PRODUCAO",
+  "ENTRADA_PRODUCAO",
+]);
 
 const brl = (value: number) =>
   new Intl.NumberFormat("pt-BR", {
@@ -626,7 +636,13 @@ export default function Inventory() {
                 key: "occurredAt",
                 label: "Data",
                 render: (row) =>
-                  new Date(row.occurredAt).toLocaleString("pt-BR"),
+                  // Compra/venda/produção carregam a data do negócio (sem hora
+                  // real) dentro de occurredAt — exibir só a data, sem
+                  // conversão de fuso, evita voltar um dia (ver formatDateOnlyDisplay).
+                  // Ajustes manuais gravam o instante real e mantêm data+hora.
+                  DATE_ONLY_MOVEMENT_TYPES.has(row.type)
+                    ? formatDateOnlyDisplay(row.occurredAt)
+                    : formatDateTimeDisplay(row.occurredAt),
               },
               { key: "productName", label: "Produto" },
               {

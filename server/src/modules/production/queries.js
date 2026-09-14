@@ -261,3 +261,8 @@ export const REMOVE_PRODUCTION_ORDER_OUTPUT_EXTRA_MUTATION = orderMutation(
   "removeProductionOrderOutputExtra",
   "RemoveProductionOrderOutputExtraInputDto",
 );
+export const REMOVE_PRODUCTION_ORDER_ITEM_MUTATION = orderMutation(
+  "RemoveProductionOrderItem",
+  "removeProductionOrderItem",
+  "RemoveProductionOrderItemInputDto",
+);
