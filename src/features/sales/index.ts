@@ -1,5 +1,6 @@
 import {
   addSalesOrderItem as addSalesOrderItemRequest,
+  addSalesOrderItems as addSalesOrderItemsRequest,
   cancelSalesOrder as cancelSalesOrderRequest,
   confirmSalesOrder as confirmSalesOrderRequest,
   createSalesOrder as createSalesOrderRequest,
@@ -13,6 +14,7 @@ import {
   SalesOrderFilterOptionsSchema,
   SalesOrderSchema,
   type AddSalesOrderItemPayload,
+  type AddSalesOrderItemsPayload,
   type CreateSalesOrderPayload,
   type ListSalesOrdersParams,
   type SalesChannel,
@@ -86,6 +88,10 @@ export const updateSalesOrderHeader = async (
 export const addSalesOrderItem = async (
   payload: AddSalesOrderItemPayload,
 ): Promise<SalesOrder> => parse(await addSalesOrderItemRequest(payload));
+
+export const addSalesOrderItems = async (
+  payload: AddSalesOrderItemsPayload,
+): Promise<SalesOrder> => parse(await addSalesOrderItemsRequest(payload));
 
 export const removeSalesOrderItem = async (
   idStore: string,

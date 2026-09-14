@@ -17,6 +17,24 @@ export const ProductionOrderItemSchema = z.object({
   lineCost: z.number(),
 });
 
+export const ProductionOrderOutputExtraSchema = z.object({
+  idProductionOrderOutputExtra: z.string(),
+  idProduct: z.string(),
+  productName: z.string(),
+  quantity: z.number(),
+  unitCostAtConsumption: z.number(),
+  lineCost: z.number(),
+});
+
+export const ProductionOrderOutputSchema = z.object({
+  idProductionOrderOutput: z.string(),
+  idProduct: z.string(),
+  productName: z.string(),
+  quantity: z.number(),
+  unitCost: z.number(),
+  extras: ProductionOrderOutputExtraSchema.array(),
+});
+
 export const ProductionOrderSchema = z.object({
   idProductionOrder: z.string(),
   idStore: z.string(),
@@ -41,10 +59,15 @@ export const ProductionOrderSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   items: ProductionOrderItemSchema.array(),
+  outputs: ProductionOrderOutputSchema.array().default([]),
 });
 
 export type ProductionOrderStatus = z.infer<typeof ProductionOrderStatusSchema>;
 export type ProductionOrderItem = z.infer<typeof ProductionOrderItemSchema>;
+export type ProductionOrderOutputExtra = z.infer<
+  typeof ProductionOrderOutputExtraSchema
+>;
+export type ProductionOrderOutput = z.infer<typeof ProductionOrderOutputSchema>;
 export type ProductionOrder = z.infer<typeof ProductionOrderSchema>;
 export type ProductionOrdersResponse = PaginatedResponse<ProductionOrder>;
 

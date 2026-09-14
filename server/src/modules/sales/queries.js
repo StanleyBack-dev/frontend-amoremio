@@ -97,6 +97,11 @@ export const ADD_SALES_ORDER_ITEM_MUTATION = mut(
   "addSalesOrderItem",
   "AddSalesOrderItemInputDto",
 );
+export const ADD_SALES_ORDER_ITEMS_MUTATION = mut(
+  "AddSalesOrderItems",
+  "addSalesOrderItems",
+  "AddSalesOrderItemsInputDto",
+);
 export const UPDATE_SALES_ORDER_ITEM_MUTATION = mut(
   "UpdateSalesOrderItem",
   "updateSalesOrderItem",

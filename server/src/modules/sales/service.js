@@ -2,6 +2,7 @@ import { HttpError } from "../../shared/http/http-error.js";
 import { executeGraphql } from "../../shared/http/graphql-client.js";
 import {
   ADD_SALES_ORDER_ITEM_MUTATION,
+  ADD_SALES_ORDER_ITEMS_MUTATION,
   CANCEL_SALES_ORDER_MUTATION,
   CONFIRM_SALES_ORDER_MUTATION,
   CREATE_SALES_ORDER_MUTATION,
@@ -75,6 +76,8 @@ export const updateSalesOrderHeader = (i, c, r) =>
   );
 export const addSalesOrderItem = (i, c, r) =>
   runMutation(ADD_SALES_ORDER_ITEM_MUTATION, "addSalesOrderItem", i, c, r);
+export const addSalesOrderItems = (i, c, r) =>
+  runMutation(ADD_SALES_ORDER_ITEMS_MUTATION, "addSalesOrderItems", i, c, r);
 export const updateSalesOrderItem = (i, c, r) =>
   runMutation(
     UPDATE_SALES_ORDER_ITEM_MUTATION,

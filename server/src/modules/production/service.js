@@ -1,6 +1,8 @@
 import { HttpError } from "../../shared/http/http-error.js";
 import { executeGraphql } from "../../shared/http/graphql-client.js";
 import {
+  ADD_PRODUCTION_ORDER_OUTPUT_EXTRA_MUTATION,
+  ADD_PRODUCTION_ORDER_OUTPUT_MUTATION,
   ADD_RECIPE_ITEM_MUTATION,
   ADD_RECIPE_ITEMS_MUTATION,
   CANCEL_PRODUCTION_ORDER_MUTATION,
@@ -8,11 +10,14 @@ import {
   CREATE_PRODUCTION_ORDER_MUTATION,
   CREATE_RECIPE_MUTATION,
   DELETE_RECIPE_MUTATION,
+  DUPLICATE_PRODUCTION_ORDER_MUTATION,
   GET_PRODUCTION_ORDER_BY_ID_QUERY,
   GET_PRODUCTION_ORDER_FILTER_OPTIONS_QUERY,
   GET_RECIPE_BY_ID_QUERY,
   GET_STORE_PRODUCTION_ORDERS_QUERY,
   GET_STORE_RECIPES_QUERY,
+  REMOVE_PRODUCTION_ORDER_OUTPUT_EXTRA_MUTATION,
+  REMOVE_PRODUCTION_ORDER_OUTPUT_MUTATION,
   REMOVE_RECIPE_ITEM_MUTATION,
   SYNC_PRODUCTION_ORDER_WITH_RECIPE_MUTATION,
   UPDATE_PRODUCTION_ORDER_MUTATION,
@@ -133,6 +138,14 @@ export const updateProductionOrder = (input, ctx, rid) =>
     ctx,
     rid,
   );
+export const duplicateProductionOrder = (input, ctx, rid) =>
+  runMutation(
+    DUPLICATE_PRODUCTION_ORDER_MUTATION,
+    "duplicateProductionOrder",
+    input,
+    ctx,
+    rid,
+  );
 export const completeProductionOrder = (input, ctx, rid) =>
   runMutation(
     COMPLETE_PRODUCTION_ORDER_MUTATION,
@@ -153,6 +166,38 @@ export const syncProductionOrderWithRecipe = (input, ctx, rid) =>
   runMutation(
     SYNC_PRODUCTION_ORDER_WITH_RECIPE_MUTATION,
     "syncProductionOrderWithRecipe",
+    input,
+    ctx,
+    rid,
+  );
+export const addProductionOrderOutput = (input, ctx, rid) =>
+  runMutation(
+    ADD_PRODUCTION_ORDER_OUTPUT_MUTATION,
+    "addProductionOrderOutput",
+    input,
+    ctx,
+    rid,
+  );
+export const removeProductionOrderOutput = (input, ctx, rid) =>
+  runMutation(
+    REMOVE_PRODUCTION_ORDER_OUTPUT_MUTATION,
+    "removeProductionOrderOutput",
+    input,
+    ctx,
+    rid,
+  );
+export const addProductionOrderOutputExtra = (input, ctx, rid) =>
+  runMutation(
+    ADD_PRODUCTION_ORDER_OUTPUT_EXTRA_MUTATION,
+    "addProductionOrderOutputExtra",
+    input,
+    ctx,
+    rid,
+  );
+export const removeProductionOrderOutputExtra = (input, ctx, rid) =>
+  runMutation(
+    REMOVE_PRODUCTION_ORDER_OUTPUT_EXTRA_MUTATION,
+    "removeProductionOrderOutputExtra",
     input,
     ctx,
     rid,

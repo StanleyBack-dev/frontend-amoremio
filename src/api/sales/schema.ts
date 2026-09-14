@@ -117,3 +117,9 @@ export interface AddSalesOrderItemPayload {
   quantity: number;
   unitPrice?: number;
 }
+
+export interface AddSalesOrderItemsPayload {
+  idStore: string;
+  idSalesOrder: string;
+  items: Array<{ idProduct: string; quantity: number; unitPrice?: number }>;
+}

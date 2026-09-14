@@ -3,6 +3,7 @@ import { getAuthContext } from "../../shared/auth/get-user-id.js";
 import { buildErrorResponse } from "../../shared/http/error-response.js";
 import {
   addSalesOrderItem,
+  addSalesOrderItems,
   cancelSalesOrder,
   confirmSalesOrder,
   createSalesOrder,
@@ -102,6 +103,17 @@ router.post(
   "/:idSalesOrder/items",
   handle((req) =>
     addSalesOrderItem(
+      { ...req.body, idSalesOrder: req.params.idSalesOrder },
+      getAuthContext(req),
+      req.requestId,
+    ),
+  ),
+);
+
+router.post(
+  "/:idSalesOrder/items/bulk",
+  handle((req) =>
+    addSalesOrderItems(
       { ...req.body, idSalesOrder: req.params.idSalesOrder },
       getAuthContext(req),
       req.requestId,

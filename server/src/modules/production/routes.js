@@ -2,6 +2,8 @@ import { Router } from "express";
 import { getAuthContext } from "../../shared/auth/get-user-id.js";
 import { buildErrorResponse } from "../../shared/http/error-response.js";
 import {
+  addProductionOrderOutput,
+  addProductionOrderOutputExtra,
   addRecipeItem,
   addRecipeItems,
   cancelProductionOrder,
@@ -9,11 +11,14 @@ import {
   createProductionOrder,
   createRecipe,
   deleteRecipe,
+  duplicateProductionOrder,
   getProductionOrderById,
   getRecipeById,
   listProductionOrderFilterOptions,
   listProductionOrders,
   listRecipes,
+  removeProductionOrderOutput,
+  removeProductionOrderOutputExtra,
   removeRecipeItem,
   syncProductionOrderWithRecipe,
   updateProductionOrder,
@@ -230,9 +235,80 @@ productionOrdersRouter.post(
 );
 
 productionOrdersRouter.post(
+  "/:idProductionOrder/outputs",
+  handle((req) =>
+    addProductionOrderOutput(
+      { ...req.body, idProductionOrder: req.params.idProductionOrder },
+      getAuthContext(req),
+      req.requestId,
+    ),
+  ),
+);
+
+productionOrdersRouter.delete(
+  "/:idProductionOrder/outputs/:idProductionOrderOutput",
+  handle((req) =>
+    removeProductionOrderOutput(
+      {
+        idStore: req.query.idStore,
+        idProductionOrder: req.params.idProductionOrder,
+        idProductionOrderOutput: req.params.idProductionOrderOutput,
+      },
+      getAuthContext(req),
+      req.requestId,
+    ),
+  ),
+);
+
+productionOrdersRouter.post(
+  "/:idProductionOrder/outputs/:idProductionOrderOutput/extras",
+  handle((req) =>
+    addProductionOrderOutputExtra(
+      {
+        ...req.body,
+        idProductionOrder: req.params.idProductionOrder,
+        idProductionOrderOutput: req.params.idProductionOrderOutput,
+      },
+      getAuthContext(req),
+      req.requestId,
+    ),
+  ),
+);
+
+productionOrdersRouter.delete(
+  "/:idProductionOrder/outputs/:idProductionOrderOutput/extras/:idProductionOrderOutputExtra",
+  handle((req) =>
+    removeProductionOrderOutputExtra(
+      {
+        idStore: req.query.idStore,
+        idProductionOrder: req.params.idProductionOrder,
+        idProductionOrderOutput: req.params.idProductionOrderOutput,
+        idProductionOrderOutputExtra: req.params.idProductionOrderOutputExtra,
+      },
+      getAuthContext(req),
+      req.requestId,
+    ),
+  ),
+);
+
+productionOrdersRouter.post(
   "/:idProductionOrder/cancel",
   handle((req) =>
     cancelProductionOrder(
+      {
+        idStore: req.body?.idStore,
+        idProductionOrder: req.params.idProductionOrder,
+      },
+      getAuthContext(req),
+      req.requestId,
+    ),
+  ),
+);
+
+productionOrdersRouter.post(
+  "/:idProductionOrder/duplicate",
+  handle((req) =>
+    duplicateProductionOrder(
       {
         idStore: req.body?.idStore,
         idProductionOrder: req.params.idProductionOrder,
