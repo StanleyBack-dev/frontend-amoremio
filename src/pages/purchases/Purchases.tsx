@@ -767,7 +767,9 @@ export default function Purchases() {
       ["Criado em", formatDateTimeDisplay(purchase.createdAt)],
       [
         "Finalizado em",
-        purchase.finalizedAt ? formatDateTimeDisplay(purchase.finalizedAt) : "—",
+        purchase.finalizedAt
+          ? formatDateTimeDisplay(purchase.finalizedAt)
+          : "—",
       ],
     ];
     const totals: [string, ReactNode][] = [
