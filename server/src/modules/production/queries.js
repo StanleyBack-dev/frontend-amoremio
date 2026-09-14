@@ -37,6 +37,26 @@ const PRODUCTION_ORDER_ITEM_FIELDS = `
   lineCost
 `;
 
+const PRODUCTION_ORDER_OUTPUT_EXTRA_FIELDS = `
+  idProductionOrderOutputExtra
+  idProduct
+  productName
+  quantity
+  unitCostAtConsumption
+  lineCost
+`;
+
+const PRODUCTION_ORDER_OUTPUT_FIELDS = `
+  idProductionOrderOutput
+  idProduct
+  productName
+  quantity
+  unitCost
+  extras {
+    ${PRODUCTION_ORDER_OUTPUT_EXTRA_FIELDS}
+  }
+`;
+
 const PRODUCTION_ORDER_FIELDS = `
   idProductionOrder
   idStore
@@ -62,6 +82,9 @@ const PRODUCTION_ORDER_FIELDS = `
   updatedAt
   items {
     ${PRODUCTION_ORDER_ITEM_FIELDS}
+  }
+  outputs {
+    ${PRODUCTION_ORDER_OUTPUT_FIELDS}
   }
 `;
 
@@ -208,8 +231,33 @@ export const CANCEL_PRODUCTION_ORDER_MUTATION = orderMutation(
   "cancelProductionOrder",
   "ProductionOrderScopeInputDto",
 );
+export const DUPLICATE_PRODUCTION_ORDER_MUTATION = orderMutation(
+  "DuplicateProductionOrder",
+  "duplicateProductionOrder",
+  "ProductionOrderScopeInputDto",
+);
 export const SYNC_PRODUCTION_ORDER_WITH_RECIPE_MUTATION = orderMutation(
   "SyncProductionOrderWithRecipe",
   "syncProductionOrderWithRecipe",
   "ProductionOrderScopeInputDto",
+);
+export const ADD_PRODUCTION_ORDER_OUTPUT_MUTATION = orderMutation(
+  "AddProductionOrderOutput",
+  "addProductionOrderOutput",
+  "AddProductionOrderOutputInputDto",
+);
+export const REMOVE_PRODUCTION_ORDER_OUTPUT_MUTATION = orderMutation(
+  "RemoveProductionOrderOutput",
+  "removeProductionOrderOutput",
+  "RemoveProductionOrderOutputInputDto",
+);
+export const ADD_PRODUCTION_ORDER_OUTPUT_EXTRA_MUTATION = orderMutation(
+  "AddProductionOrderOutputExtra",
+  "addProductionOrderOutputExtra",
+  "AddProductionOrderOutputExtraInputDto",
+);
+export const REMOVE_PRODUCTION_ORDER_OUTPUT_EXTRA_MUTATION = orderMutation(
+  "RemoveProductionOrderOutputExtra",
+  "removeProductionOrderOutputExtra",
+  "RemoveProductionOrderOutputExtraInputDto",
 );

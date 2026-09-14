@@ -38,7 +38,7 @@ import type {
   SalesOrderFilterOptions,
 } from "@/api/sales/schema";
 import {
-  addSalesOrderItem,
+  addSalesOrderItems,
   calcSalesLineTotal,
   cancelSalesOrder,
   confirmSalesOrder,
@@ -77,6 +77,13 @@ type PendingConfirm =
   | { kind: "confirm" }
   | null;
 
+type StagedSalesItem = {
+  key: string;
+  idProduct: string;
+  quantity: number;
+  unitPrice: number;
+};
+
 export default function Sales() {
   const { showError, showSuccess } = useToast();
   const { track } = useLoading();
@@ -94,7 +101,7 @@ export default function Sales() {
   );
   const [open, setOpen] = useState<SalesOrder | null>(null);
   // "Nova venda" opens the form without creating anything — the record is
-  // created when the first item is added (see handleAddItem).
+  // created when the staged list is first saved (see handleSaveStaged).
   const [composingNew, setComposingNew] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -117,6 +124,10 @@ export default function Sales() {
   const [itemProduct, setItemProduct] = useState("");
   const [itemQty, setItemQty] = useState(0);
   const [itemPrice, setItemPrice] = useState(0);
+  // Staged items — same add-to-list pattern as Compras/Receitas: pile up
+  // locally (no network call) and send everything in one bulk request,
+  // instead of one round-trip per product added.
+  const [staged, setStaged] = useState<StagedSalesItem[]>([]);
 
   const [statementOrder, setStatementOrder] = useState<SalesOrder | null>(null);
   const [statementMovements, setStatementMovements] = useState<StockMovement[]>(
@@ -270,6 +281,10 @@ export default function Sales() {
     const fresh = await track(fetchSalesOrderById(activeStoreId, idSalesOrder));
     setOpen(fresh);
     syncHeader(fresh);
+    setItemProduct("");
+    setItemQty(0);
+    setItemPrice(0);
+    setStaged([]);
   }
 
   // Confirming a sale is what debits stock (SAIDA_VENDA), and that movement
@@ -314,14 +329,16 @@ export default function Sales() {
     [products, stockByProduct],
   );
 
-  // Products already on the sale are hidden from the picker — one product,
-  // one line (same rule Compras/Receitas/Lista de Compras use).
+  // Products already on the sale, or already staged, are hidden from the
+  // picker — one product, one line (same rule Compras/Receitas/Lista de
+  // Compras use).
   const availableProducts = useMemo(() => {
     const taken = new Set((open?.items ?? []).map((item) => item.idProduct));
+    for (const row of staged) taken.add(row.idProduct);
     return sellableProducts.filter((product) => !taken.has(product.idProduct));
-  }, [sellableProducts, open]);
+  }, [sellableProducts, open, staged]);
 
-  // Opens the form only; nothing is persisted until the first item is added.
+  // Opens the form only; nothing is persisted until the staged list is saved.
   function handleNew() {
     setOpen(null);
     setComposingNew(true);
@@ -337,11 +354,13 @@ export default function Sales() {
     setItemProduct("");
     setItemQty(0);
     setItemPrice(0);
+    setStaged([]);
   }
 
   function closeDrawer() {
     setOpen(null);
     setComposingNew(false);
+    setStaged([]);
     void loadList();
     void loadFilterOptions();
   }
@@ -422,9 +441,13 @@ export default function Sales() {
     return round2(onHand - reserved);
   }, [itemProduct, stockByProduct, open]);
   const exceedsStock = !!itemProduct && itemQty > availableForSelected;
+  const stagedToSave =
+    staged.length + (itemProduct && itemQty > 0 && !exceedsStock ? 1 : 0);
 
-  async function handleAddItem() {
-    if (busy || !activeStoreId || !itemProduct) return;
+  // Pure client-side — stages the currently-typed line so several products
+  // can pile up before a single "Adicionar" round-trip (see handleSaveStaged).
+  function handleAddToList() {
+    if (!itemProduct) return;
     if (itemQty <= 0) {
       showError("Quantidade inválida", "Informe um valor maior que zero.");
       return;
@@ -436,10 +459,52 @@ export default function Sales() {
       );
       return;
     }
+    setStaged((prev) => [
+      ...prev,
+      {
+        key: `${itemProduct}-${Date.now()}-${prev.length}`,
+        idProduct: itemProduct,
+        quantity: itemQty,
+        unitPrice: itemPrice,
+      },
+    ]);
+    setItemProduct("");
+    setItemQty(0);
+    setItemPrice(0);
+  }
+
+  function handleRemoveStaged(key: string) {
+    setStaged((prev) => prev.filter((row) => row.key !== key));
+  }
+
+  // Commits the whole staged list in one call — creates the sale first if
+  // this is the first save (same as before), then a single bulk addItems
+  // instead of one addItem round-trip per product.
+  async function handleSaveStaged() {
+    if (busy) return;
+    // Fold a filled-but-not-yet-staged row into the batch so the user never
+    // loses what they just typed.
+    const items = [
+      ...staged.map((row) => ({
+        idProduct: row.idProduct,
+        quantity: row.quantity,
+        unitPrice: row.unitPrice > 0 ? row.unitPrice : undefined,
+      })),
+      ...(itemProduct && itemQty > 0 && !exceedsStock
+        ? [
+            {
+              idProduct: itemProduct,
+              quantity: itemQty,
+              unitPrice: itemPrice > 0 ? itemPrice : undefined,
+            },
+          ]
+        : []),
+    ];
+    if (items.length === 0 || !activeStoreId) return;
     setBusy(true);
     try {
       let idSalesOrder = open?.idSalesOrder;
-      // First item of a new sale: create the record now and carry over any
+      // First save of a new sale: create the record now and carry over any
       // header fields that were already typed.
       if (!idSalesOrder) {
         const created = await createSalesOrder({
@@ -466,22 +531,25 @@ export default function Sales() {
           });
         }
       }
-      const updated = await addSalesOrderItem({
+      const updated = await addSalesOrderItems({
         idStore: activeStoreId,
         idSalesOrder,
-        idProduct: itemProduct,
-        quantity: itemQty,
-        unitPrice: itemPrice > 0 ? itemPrice : undefined,
+        items,
       });
       setOpen(updated);
       setComposingNew(false);
       syncHeader(updated);
+      setStaged([]);
       setItemProduct("");
       setItemQty(0);
       setItemPrice(0);
+      showSuccess(
+        `${items.length} ${items.length > 1 ? "itens adicionados" : "item adicionado"}`,
+        "",
+      );
     } catch (error) {
       showError(
-        "Erro ao adicionar item",
+        "Erro ao adicionar itens",
         error instanceof Error ? error.message : "Tente novamente.",
       );
     } finally {
@@ -1271,7 +1339,11 @@ export default function Sales() {
             </SectionCard>
 
             {isOpen && (
-              <SectionCard title="Calculadora de desconto e comissão">
+              <SectionCard
+                title="Calculadora de desconto e comissão"
+                collapsible
+                defaultOpen={false}
+              >
                 <p className="mb-3 text-[12px] text-ink-muted">
                   Copie os dois valores direto do extrato do app (iFood, 99Food
                   etc.) — Desconto e Comissão do canal acima (e o Total/Líquido
@@ -1377,16 +1449,70 @@ export default function Sales() {
                 )}
                 <div className="mt-4">
                   <Button
-                    variant="primary"
-                    loading={busy}
-                    disabled={
-                      busy || !itemProduct || itemQty <= 0 || exceedsStock
-                    }
-                    onClick={handleAddItem}
+                    variant="outline"
+                    disabled={!itemProduct || itemQty <= 0 || exceedsStock}
+                    onClick={handleAddToList}
                   >
-                    Adicionar à venda
+                    Adicionar à lista
                   </Button>
                 </div>
+
+                {stagedToSave > 0 && (
+                  <div className="mt-4 flex flex-col gap-3">
+                    {staged.length > 0 && (
+                      <ul className="flex flex-col rounded-lg border border-hairline">
+                        {staged.map((row) => {
+                          const product = products.find(
+                            (p) => p.idProduct === row.idProduct,
+                          );
+                          return (
+                            <li
+                              key={row.key}
+                              className="flex items-center justify-between gap-3 border-b border-hairline px-3 py-2 text-[13px] last:border-b-0"
+                            >
+                              <span className="text-ink">
+                                {product
+                                  ? productOptionLabel(product)
+                                  : row.idProduct}
+                              </span>
+                              <span className="flex items-center gap-3">
+                                <span className="tabular-nums text-ink-muted">
+                                  {qtyFmt(row.quantity)} × {brl(row.unitPrice)}{" "}
+                                  ={" "}
+                                  {brl(
+                                    calcSalesLineTotal(
+                                      row.quantity,
+                                      row.unitPrice,
+                                    ),
+                                  )}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="!text-err-fg hover:!bg-err-bg"
+                                  onClick={() => handleRemoveStaged(row.key)}
+                                >
+                                  Remover
+                                </Button>
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                    <div>
+                      <Button
+                        variant="primary"
+                        loading={busy}
+                        disabled={busy}
+                        onClick={handleSaveStaged}
+                      >
+                        Adicionar {stagedToSave}{" "}
+                        {stagedToSave > 1 ? "itens" : "item"} à venda
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </SectionCard>
             )}
 

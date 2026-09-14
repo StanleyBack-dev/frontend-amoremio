@@ -1,10 +1,15 @@
 import {
+  addProductionOrderOutput as addProductionOrderOutputRequest,
+  addProductionOrderOutputExtra as addProductionOrderOutputExtraRequest,
   cancelProductionOrder as cancelProductionOrderRequest,
   completeProductionOrder as completeProductionOrderRequest,
   createProductionOrder as createProductionOrderRequest,
+  duplicateProductionOrder as duplicateProductionOrderRequest,
   getProductionOrderById as getProductionOrderByIdRequest,
   getStoreProductionOrderFilterOptions as getStoreProductionOrderFilterOptionsRequest,
   getStoreProductionOrders as getStoreProductionOrdersRequest,
+  removeProductionOrderOutput as removeProductionOrderOutputRequest,
+  removeProductionOrderOutputExtra as removeProductionOrderOutputExtraRequest,
   syncProductionOrderWithRecipe as syncProductionOrderWithRecipeRequest,
   updateProductionOrder as updateProductionOrderRequest,
 } from "@/api/production/methods";
@@ -88,6 +93,72 @@ export const completeProductionOrder = async (
 ): Promise<ProductionOrder> =>
   parse(await completeProductionOrderRequest(idStore, idProductionOrder));
 
+export const addProductionOrderOutput = async (
+  idStore: string,
+  idProductionOrder: string,
+  idProduct: string,
+  quantity: number,
+): Promise<ProductionOrder> =>
+  parse(
+    await addProductionOrderOutputRequest(
+      idStore,
+      idProductionOrder,
+      idProduct,
+      quantity,
+    ),
+  );
+
+export const removeProductionOrderOutput = async (
+  idStore: string,
+  idProductionOrder: string,
+  idProductionOrderOutput: string,
+): Promise<ProductionOrder> =>
+  parse(
+    await removeProductionOrderOutputRequest(
+      idStore,
+      idProductionOrder,
+      idProductionOrderOutput,
+    ),
+  );
+
+export const addProductionOrderOutputExtra = async (
+  idStore: string,
+  idProductionOrder: string,
+  idProductionOrderOutput: string,
+  idProduct: string,
+  quantity: number,
+): Promise<ProductionOrder> =>
+  parse(
+    await addProductionOrderOutputExtraRequest(
+      idStore,
+      idProductionOrder,
+      idProductionOrderOutput,
+      idProduct,
+      quantity,
+    ),
+  );
+
+export const removeProductionOrderOutputExtra = async (
+  idStore: string,
+  idProductionOrder: string,
+  idProductionOrderOutput: string,
+  idProductionOrderOutputExtra: string,
+): Promise<ProductionOrder> =>
+  parse(
+    await removeProductionOrderOutputExtraRequest(
+      idStore,
+      idProductionOrder,
+      idProductionOrderOutput,
+      idProductionOrderOutputExtra,
+    ),
+  );
+
+export const duplicateProductionOrder = async (
+  idStore: string,
+  idProductionOrder: string,
+): Promise<ProductionOrder> =>
+  parse(await duplicateProductionOrderRequest(idStore, idProductionOrder));
+
 export const cancelProductionOrder = async (
   idStore: string,
   idProductionOrder: string,
@@ -110,5 +181,7 @@ export const productionOrderStatusLabel: Record<ProductionOrderStatus, string> =
 export type {
   ProductionOrder,
   ProductionOrderItem,
+  ProductionOrderOutput,
+  ProductionOrderOutputExtra,
   ProductionOrderStatus,
 } from "@/api/production/schema";

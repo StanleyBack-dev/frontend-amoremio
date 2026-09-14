@@ -1,6 +1,7 @@
 import { apiHttp, getApiErrorMessage } from "../shared/http-client";
 import type {
   AddSalesOrderItemPayload,
+  AddSalesOrderItemsPayload,
   CreateSalesOrderPayload,
   ListSalesOrdersParams,
   SalesOrder,
@@ -92,6 +93,21 @@ export async function addSalesOrderItem(
     return response.data;
   } catch (error) {
     throw fail(error, "Não foi possível adicionar o item.");
+  }
+}
+
+export async function addSalesOrderItems(
+  payload: AddSalesOrderItemsPayload,
+): Promise<SalesOrder> {
+  try {
+    const { idSalesOrder, ...body } = payload;
+    const response = await apiHttp.post<SalesOrder>(
+      `/sales-orders/${idSalesOrder}/items/bulk`,
+      body,
+    );
+    return response.data;
+  } catch (error) {
+    throw fail(error, "Não foi possível adicionar os itens.");
   }
 }
 
