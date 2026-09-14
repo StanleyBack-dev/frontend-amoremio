@@ -8,6 +8,7 @@ import {
   completeProductionOrder,
   createProductionOrder,
   createRecipe,
+  deleteRecipe,
   getProductionOrderById,
   getRecipeById,
   listProductionOrderFilterOptions,
@@ -80,6 +81,17 @@ recipesRouter.patch(
   handle((req) =>
     updateRecipe(
       { ...req.body, idRecipe: req.params.idRecipe },
+      getAuthContext(req),
+      req.requestId,
+    ),
+  ),
+);
+
+recipesRouter.delete(
+  "/:idRecipe",
+  handle((req) =>
+    deleteRecipe(
+      { idStore: req.query.idStore, idRecipe: req.params.idRecipe },
       getAuthContext(req),
       req.requestId,
     ),

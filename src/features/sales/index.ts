@@ -123,6 +123,7 @@ export const salesChannelLabel: Record<SalesChannel, string> = {
   AIQFOME: "aiqfome",
   WHATSAPP: "WhatsApp",
   TELEFONE: "Telefone",
+  FACULDADE: "Faculdade",
   OUTRO: "Outro",
 };
 

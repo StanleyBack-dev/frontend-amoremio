@@ -29,6 +29,7 @@ import type { Recipe } from "@/api/recipes/schema";
 import {
   addRecipeItems,
   createRecipe,
+  deleteRecipe,
   fetchRecipeById,
   fetchRecipes,
   removeRecipeItem,
@@ -39,7 +40,7 @@ type StagedItem = { key: string; idProduct: string; quantity: number };
 
 type PendingConfirm =
   | { kind: "removeItem"; idRecipeItem: string; productName: string }
-  | { kind: "toggleStatus"; activating: boolean }
+  | { kind: "delete" }
   | null;
 
 const qty = (value: number) =>
@@ -238,20 +239,20 @@ export default function Recipes() {
     }
   }
 
-  async function toggleStatus() {
+  async function handleDelete() {
     if (!activeStoreId || !open) return;
+    setBusy(true);
     try {
-      await updateRecipe({
-        idStore: activeStoreId,
-        idRecipe: open.idRecipe,
-        status: !open.status,
-      });
-      await refreshOpen(open.idRecipe);
+      await deleteRecipe(activeStoreId, open.idRecipe);
+      showSuccess("Ficha técnica excluída", "");
+      closeDrawer();
     } catch (error) {
       showError(
-        "Erro ao alterar situação",
+        "Erro ao excluir",
         error instanceof Error ? error.message : "Tente novamente.",
       );
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -351,7 +352,7 @@ export default function Recipes() {
       if (confirm.kind === "removeItem") {
         await handleRemoveItem(confirm.idRecipeItem);
       } else {
-        await toggleStatus();
+        await handleDelete();
       }
       setConfirm(null);
     } finally {
@@ -585,14 +586,10 @@ export default function Recipes() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() =>
-                      setConfirm({
-                        kind: "toggleStatus",
-                        activating: !open.status,
-                      })
-                    }
+                    className="!text-err-fg hover:!bg-err-bg"
+                    onClick={() => setConfirm({ kind: "delete" })}
                   >
-                    {open.status ? "Inativar receita" : "Reativar receita"}
+                    Excluir receita
                   </Button>
                 </div>
               )}
@@ -735,25 +732,13 @@ export default function Recipes() {
           if (!confirmBusy) setConfirm(null);
         }}
         onConfirm={runConfirm}
-        variant={
-          confirm?.kind === "toggleStatus" && confirm.activating
-            ? "warning"
-            : "danger"
-        }
+        variant="danger"
         title={
           confirm?.kind === "removeItem"
             ? "Remover ingrediente"
-            : confirm?.kind === "toggleStatus" && confirm.activating
-              ? "Reativar receita"
-              : "Inativar receita"
+            : "Excluir ficha técnica"
         }
-        confirmLabel={
-          confirm?.kind === "removeItem"
-            ? "Remover"
-            : confirm?.kind === "toggleStatus" && confirm.activating
-              ? "Reativar"
-              : "Inativar"
-        }
+        confirmLabel={confirm?.kind === "removeItem" ? "Remover" : "Excluir"}
         description={
           confirm?.kind === "removeItem" ? (
             <>
@@ -761,10 +746,13 @@ export default function Recipes() {
               <strong className="text-ink">{confirm.productName}</strong> desta
               ficha técnica?
             </>
-          ) : confirm?.kind === "toggleStatus" && confirm.activating ? (
-            "A receita volta a ficar disponível para novas produções."
           ) : (
-            "A receita fica indisponível para novas produções (as já registradas não mudam)."
+            <>
+              A ficha técnica <strong className="text-ink">{open?.name}</strong>{" "}
+              será excluída permanentemente, junto com seus ingredientes. Essa
+              ação não pode ser desfeita. Ordens de produção já concluídas ou
+              canceladas não são afetadas.
+            </>
           )
         }
       />

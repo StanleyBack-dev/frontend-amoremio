@@ -177,6 +177,17 @@ export const REMOVE_RECIPE_ITEM_MUTATION = recipeMutation(
   "RemoveRecipeItemInputDto",
 );
 
+// No `data` payload — the recipe is gone, just a success envelope.
+export const DELETE_RECIPE_MUTATION = `
+  mutation DeleteRecipe($input: RecipeScopeInputDto!) {
+    deleteRecipe(input: $input) {
+      success
+      message
+      code
+    }
+  }
+`;
+
 export const CREATE_PRODUCTION_ORDER_MUTATION = orderMutation(
   "CreateProductionOrder",
   "createProductionOrder",

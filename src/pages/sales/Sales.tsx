@@ -97,6 +97,7 @@ export default function Sales() {
   const [busy, setBusy] = useState(false);
 
   const [customer, setCustomer] = useState("");
+  const [orderDate, setOrderDate] = useState("");
   const [discount, setDiscount] = useState(0);
   const [discountMode, setDiscountMode] = useState<SalesDiscountMode>("VALOR");
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -216,6 +217,7 @@ export default function Sales() {
 
   function syncHeader(order: SalesOrder) {
     setCustomer(order.customerName ?? "");
+    setOrderDate(order.orderDate.slice(0, 10));
     setDiscount(order.discountAmount ?? 0);
     setDiscountMode(order.discountMode ?? "VALOR");
     setDiscountPercent(order.discountPercent ?? 0);
@@ -240,11 +242,19 @@ export default function Sales() {
     [products, stockByProduct],
   );
 
+  // Products already on the sale are hidden from the picker — one product,
+  // one line (same rule Compras/Receitas/Lista de Compras use).
+  const availableProducts = useMemo(() => {
+    const taken = new Set((open?.items ?? []).map((item) => item.idProduct));
+    return sellableProducts.filter((product) => !taken.has(product.idProduct));
+  }, [sellableProducts, open]);
+
   // Opens the form only; nothing is persisted until the first item is added.
   function handleNew() {
     setOpen(null);
     setComposingNew(true);
     setCustomer("");
+    setOrderDate("");
     setDiscount(0);
     setDiscountMode("VALOR");
     setDiscountPercent(0);
@@ -288,6 +298,27 @@ export default function Sales() {
     } catch (error) {
       showError(
         "Erro ao salvar",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    }
+  }
+
+  // Kept separate from `saveHeader`: the backend still accepts a date
+  // correction after the sale is confirmed, but rejects any of the other
+  // header fields at that point — sending them all together (unchanged or
+  // not) would get the whole request locked out.
+  async function saveOrderDate() {
+    if (!activeStoreId || !open) return;
+    try {
+      const updated = await updateSalesOrderHeader({
+        idStore: activeStoreId,
+        idSalesOrder: open.idSalesOrder,
+        orderDate: orderDate || undefined,
+      });
+      setOpen(updated);
+    } catch (error) {
+      showError(
+        "Erro ao salvar a data",
         error instanceof Error ? error.message : "Tente novamente.",
       );
     }
@@ -338,7 +369,10 @@ export default function Sales() {
       // First item of a new sale: create the record now and carry over any
       // header fields that were already typed.
       if (!idSalesOrder) {
-        const created = await createSalesOrder({ idStore: activeStoreId });
+        const created = await createSalesOrder({
+          idStore: activeStoreId,
+          orderDate: orderDate || undefined,
+        });
         idSalesOrder = created.idSalesOrder;
         if (
           customer.trim() ||
@@ -471,6 +505,9 @@ export default function Sales() {
   }
 
   const isOpen = composingNew || open?.status === "ABERTA";
+  // The sale date stays correctable after confirmation — every other header
+  // field locks. Only a cancelled order is fully read-only.
+  const canEditDate = composingNew || open?.status !== "CANCELADA";
 
   // While the sale is editable, the discount / total follow the fields being
   // typed; once confirmed they show the frozen values.
@@ -763,6 +800,21 @@ export default function Sales() {
                   onBlur={() => saveHeader()}
                   disabled={!isOpen}
                 />
+                <div>
+                  <Input
+                    label="Data da venda"
+                    type="date"
+                    value={orderDate}
+                    onChange={(e) => setOrderDate(e.target.value)}
+                    onBlur={saveOrderDate}
+                    disabled={!canEditDate}
+                  />
+                  {!isOpen && canEditDate && (
+                    <p className="mt-1 text-[11px] text-ink-subtle">
+                      Único dado ainda editável após a confirmação.
+                    </p>
+                  )}
+                </div>
                 <Select
                   label="Canal de venda"
                   value={channel}
@@ -839,7 +891,7 @@ export default function Sales() {
                     value={itemProduct}
                     onChange={(e) => {
                       setItemProduct(e.target.value);
-                      const prod = sellableProducts.find(
+                      const prod = availableProducts.find(
                         (p) => p.idProduct === e.target.value,
                       );
                       if (prod?.salePrice != null && itemPrice === 0)
@@ -847,11 +899,11 @@ export default function Sales() {
                     }}
                   >
                     <option value="">
-                      {sellableProducts.length === 0
+                      {availableProducts.length === 0
                         ? "Nenhum produto final com estoque"
                         : "Selecione"}
                     </option>
-                    {sellableProducts.map((product) => (
+                    {availableProducts.map((product) => (
                       <option key={product.idProduct} value={product.idProduct}>
                         {productOptionLabel(product)} ·{" "}
                         {stockByProduct.get(product.idProduct) ?? 0} em estoque

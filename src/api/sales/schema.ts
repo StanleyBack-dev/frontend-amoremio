@@ -16,6 +16,7 @@ export const SalesChannelSchema = z.enum([
   "AIQFOME",
   "WHATSAPP",
   "TELEFONE",
+  "FACULDADE",
   "OUTRO",
 ]);
 
@@ -100,6 +101,7 @@ export interface UpdateSalesOrderHeaderPayload {
   idStore: string;
   idSalesOrder: string;
   customerName?: string;
+  orderDate?: string;
   salesChannel?: SalesChannel;
   commissionPercent?: number;
   discountAmount?: number;

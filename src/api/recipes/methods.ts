@@ -122,3 +122,14 @@ export async function removeRecipeItem(
     throw fail(error, "Não foi possível remover o ingrediente.");
   }
 }
+
+export async function deleteRecipe(
+  idStore: string,
+  idRecipe: string,
+): Promise<void> {
+  try {
+    await apiHttp.delete(`/recipes/${idRecipe}`, { params: { idStore } });
+  } catch (error) {
+    throw fail(error, "Não foi possível excluir a ficha técnica.");
+  }
+}
