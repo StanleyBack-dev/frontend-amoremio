@@ -98,6 +98,23 @@ export async function completeProductionOrder(
   }
 }
 
+export async function addProductionOrderItem(
+  idStore: string,
+  idProductionOrder: string,
+  idProduct: string,
+  quantity: number,
+): Promise<ProductionOrder> {
+  try {
+    const response = await apiHttp.post<ProductionOrder>(
+      `/production-orders/${idProductionOrder}/items`,
+      { idStore, idProduct, quantity },
+    );
+    return response.data;
+  } catch (error) {
+    throw fail(error, "Não foi possível adicionar o insumo.");
+  }
+}
+
 export async function removeProductionOrderItem(
   idStore: string,
   idProductionOrder: string,

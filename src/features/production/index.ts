@@ -1,4 +1,5 @@
 import {
+  addProductionOrderItem as addProductionOrderItemRequest,
   addProductionOrderOutput as addProductionOrderOutputRequest,
   addProductionOrderOutputExtra as addProductionOrderOutputExtraRequest,
   cancelProductionOrder as cancelProductionOrderRequest,
@@ -93,6 +94,21 @@ export const completeProductionOrder = async (
   idProductionOrder: string,
 ): Promise<ProductionOrder> =>
   parse(await completeProductionOrderRequest(idStore, idProductionOrder));
+
+export const addProductionOrderItem = async (
+  idStore: string,
+  idProductionOrder: string,
+  idProduct: string,
+  quantity: number,
+): Promise<ProductionOrder> =>
+  parse(
+    await addProductionOrderItemRequest(
+      idStore,
+      idProductionOrder,
+      idProduct,
+      quantity,
+    ),
+  );
 
 export const removeProductionOrderItem = async (
   idStore: string,

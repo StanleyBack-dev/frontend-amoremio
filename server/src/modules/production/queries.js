@@ -241,6 +241,11 @@ export const SYNC_PRODUCTION_ORDER_WITH_RECIPE_MUTATION = orderMutation(
   "syncProductionOrderWithRecipe",
   "ProductionOrderScopeInputDto",
 );
+export const ADD_PRODUCTION_ORDER_ITEM_MUTATION = orderMutation(
+  "AddProductionOrderItem",
+  "addProductionOrderItem",
+  "AddProductionOrderItemInputDto",
+);
 export const ADD_PRODUCTION_ORDER_OUTPUT_MUTATION = orderMutation(
   "AddProductionOrderOutput",
   "addProductionOrderOutput",

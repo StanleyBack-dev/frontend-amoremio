@@ -1,6 +1,7 @@
 import { HttpError } from "../../shared/http/http-error.js";
 import { executeGraphql } from "../../shared/http/graphql-client.js";
 import {
+  ADD_PRODUCTION_ORDER_ITEM_MUTATION,
   ADD_PRODUCTION_ORDER_OUTPUT_EXTRA_MUTATION,
   ADD_PRODUCTION_ORDER_OUTPUT_MUTATION,
   ADD_RECIPE_ITEM_MUTATION,
@@ -167,6 +168,14 @@ export const syncProductionOrderWithRecipe = (input, ctx, rid) =>
   runMutation(
     SYNC_PRODUCTION_ORDER_WITH_RECIPE_MUTATION,
     "syncProductionOrderWithRecipe",
+    input,
+    ctx,
+    rid,
+  );
+export const addProductionOrderItem = (input, ctx, rid) =>
+  runMutation(
+    ADD_PRODUCTION_ORDER_ITEM_MUTATION,
+    "addProductionOrderItem",
     input,
     ctx,
     rid,

@@ -34,6 +34,7 @@ import type {
   ProductionOrderFilterOptions,
 } from "@/api/production/schema";
 import {
+  addProductionOrderItem,
   addProductionOrderOutput,
   addProductionOrderOutputExtra,
   cancelProductionOrder,
@@ -162,6 +163,12 @@ export default function Production() {
   // drawer instead of living only in local state until completion.
   const [stagingProduct, setStagingProduct] = useState("");
   const [stagingQty, setStagingQty] = useState(0);
+  // Staging for manually adding a shared insumo straight to "Insumos a
+  // consumir" — e.g. a packaging item several outputs share, which the
+  // recipe doesn't list. Separate from stagingProduct/Qty (that pair is for
+  // the output picker) and from extraStaging (that's per-output).
+  const [itemStagingProduct, setItemStagingProduct] = useState("");
+  const [itemStagingQty, setItemStagingQty] = useState(0);
   // One staging slot per output line, keyed by idProductionOrderOutput, for
   // that line's "insumo extra" add-to-list.
   const [extraStaging, setExtraStaging] = useState<
@@ -443,6 +450,33 @@ export default function Production() {
     } catch (error) {
       showError(
         "Erro ao remover saída",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Adds one insumo straight to the shared list — for something the recipe
+  // doesn't call for but this batch still needs, and that's common to every
+  // output rather than tied to one of them (that's handleAddExtra).
+  async function handleAddItem() {
+    if (!activeStoreId || !open || !itemStagingProduct || itemStagingQty <= 0)
+      return;
+    setBusy(true);
+    try {
+      const updated = await addProductionOrderItem(
+        activeStoreId,
+        open.idProductionOrder,
+        itemStagingProduct,
+        itemStagingQty,
+      );
+      setOpen(updated);
+      setItemStagingProduct("");
+      setItemStagingQty(0);
+    } catch (error) {
+      showError(
+        "Erro ao adicionar insumo",
         error instanceof Error ? error.message : "Tente novamente.",
       );
     } finally {
@@ -774,6 +808,15 @@ export default function Production() {
   );
   const availableOutputProducts = outputProducts.filter(
     (product) => !takenOutputProducts.has(product.idProduct),
+  );
+
+  // Insumos already on the shared list drop out of the "add insumo" picker,
+  // same one-line-per-product rule.
+  const takenOrderItemProducts = new Set(
+    (open?.items ?? []).map((item) => item.idProduct),
+  );
+  const availableItemProducts = extraProducts.filter(
+    (product) => !takenOrderItemProducts.has(product.idProduct),
   );
 
   // Read-only "receipt" for a concluded order — a single consolidated view
@@ -1571,6 +1614,39 @@ export default function Production() {
                 ) : undefined
               }
             >
+              {isDraft && (
+                <div className="mb-4 grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_8rem_auto]">
+                  <Select
+                    label="Insumo (comum a todas as saídas)"
+                    value={itemStagingProduct}
+                    onChange={(e) => setItemStagingProduct(e.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    {availableItemProducts.map((product) => (
+                      <option key={product.idProduct} value={product.idProduct}>
+                        {productOptionLabel(product)}
+                      </option>
+                    ))}
+                  </Select>
+                  <NumberInput
+                    label="Quantidade"
+                    value={itemStagingQty}
+                    onValueChange={setItemStagingQty}
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    loading={busy}
+                    disabled={
+                      busy || !itemStagingProduct || itemStagingQty <= 0
+                    }
+                    onClick={handleAddItem}
+                  >
+                    Adicionar insumo
+                  </Button>
+                </div>
+              )}
+
               <DataTable
                 data={insumosPreviewRows}
                 getId={(row) => row.key}

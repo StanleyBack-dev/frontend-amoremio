@@ -2,6 +2,7 @@ import { Router } from "express";
 import { getAuthContext } from "../../shared/auth/get-user-id.js";
 import { buildErrorResponse } from "../../shared/http/error-response.js";
 import {
+  addProductionOrderItem,
   addProductionOrderOutput,
   addProductionOrderOutputExtra,
   addRecipeItem,
@@ -229,6 +230,17 @@ productionOrdersRouter.post(
         idStore: req.body?.idStore,
         idProductionOrder: req.params.idProductionOrder,
       },
+      getAuthContext(req),
+      req.requestId,
+    ),
+  ),
+);
+
+productionOrdersRouter.post(
+  "/:idProductionOrder/items",
+  handle((req) =>
+    addProductionOrderItem(
+      { ...req.body, idProductionOrder: req.params.idProductionOrder },
       getAuthContext(req),
       req.requestId,
     ),
