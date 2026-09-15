@@ -58,7 +58,11 @@ export default function TopProductsBarChart({
         barCategoryGap={10}
       >
         {/* 20% headroom so the value label past the longest bar never clips. */}
-        <XAxis type="number" hide domain={[0, (dataMax: number) => dataMax * 1.2]} />
+        <XAxis
+          type="number"
+          hide
+          domain={[0, (dataMax: number) => dataMax * 1.2]}
+        />
         <YAxis
           type="category"
           dataKey="productName"

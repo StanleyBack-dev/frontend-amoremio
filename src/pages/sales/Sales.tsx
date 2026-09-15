@@ -423,7 +423,8 @@ export default function Sales() {
       const updated = await updateSalesOrderHeader({
         idStore: activeStoreId,
         idSalesOrder: open.idSalesOrder,
-        idCustomer: next?.idCustomer !== undefined ? next.idCustomer : idCustomer,
+        idCustomer:
+          next?.idCustomer !== undefined ? next.idCustomer : idCustomer,
         discountAmount: next?.discount ?? discount,
         discountMode: next?.discountMode ?? discountMode,
         discountPercent: next?.discountPercent ?? discountPercent,
@@ -468,9 +469,7 @@ export default function Sales() {
   function handleCustomerChange(nextIdCustomer: string) {
     const value = nextIdCustomer || null;
     setIdCustomer(value);
-    setCustomerName(
-      customers.find((c) => c.idCustomer === value)?.name ?? "",
-    );
+    setCustomerName(customers.find((c) => c.idCustomer === value)?.name ?? "");
     if (open) void saveHeader({ idCustomer: value });
   }
 
