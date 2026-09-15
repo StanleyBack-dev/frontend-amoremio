@@ -39,6 +39,11 @@ import {
 import type { Product } from "@/api/catalog/schema";
 import { createCustomer, fetchCustomers } from "@/features/customers";
 import type { Customer } from "@/api/customers/schema";
+import {
+  fetchUnmappedChannelProducts,
+  mapChannelProduct,
+} from "@/features/channel-orders";
+import type { UnmappedChannelProduct } from "@/api/channel-orders/schema";
 import type {
   ListSalesOrdersParams,
   SalesOrder,
@@ -129,6 +134,17 @@ export default function Sales() {
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [customerForm, setCustomerForm] = useState(emptyCustomerForm);
   const [savingCustomer, setSavingCustomer] = useState(false);
+
+  const [unmappedProducts, setUnmappedProducts] = useState<
+    UnmappedChannelProduct[]
+  >([]);
+  // Keyed by `${channel}:${externalProductId}` — the product picked for
+  // each pending row before "Salvar" is clicked.
+  const [mappingChoice, setMappingChoice] = useState<Record<string, string>>(
+    {},
+  );
+  const [savingMappingKey, setSavingMappingKey] = useState<string | null>(null);
+
   const [orderDate, setOrderDate] = useState("");
   const [discount, setDiscount] = useState(0);
   const [discountMode, setDiscountMode] = useState<SalesDiscountMode>("VALOR");
@@ -271,6 +287,19 @@ export default function Sales() {
     }
   }, [activeStoreId]);
 
+  // Items from 99Food/iFood orders that arrived but couldn't resolve to a
+  // product yet — see channel-orders module. Mapping one here can promote
+  // several held-back orders at once (see handleMapChannelProduct), which
+  // is why loadList() runs again after a successful save.
+  const loadUnmappedChannelProducts = useCallback(async () => {
+    if (!activeStoreId) return;
+    try {
+      setUnmappedProducts(await fetchUnmappedChannelProducts(activeStoreId));
+    } catch {
+      setUnmappedProducts([]);
+    }
+  }, [activeStoreId]);
+
   useEffect(() => {
     void loadList();
   }, [loadList]);
@@ -282,6 +311,10 @@ export default function Sales() {
   useEffect(() => {
     void loadCustomers();
   }, [loadCustomers]);
+
+  useEffect(() => {
+    void loadUnmappedChannelProducts();
+  }, [loadUnmappedChannelProducts]);
 
   // Mirrors the calculator's derived values into Desconto/Comissão live, as
   // the user types — the whole point of the calculator is to skip doing this
@@ -499,6 +532,47 @@ export default function Sales() {
       );
     } finally {
       setSavingCustomer(false);
+    }
+  }
+
+  function unmappedRowKey(row: UnmappedChannelProduct): string {
+    return `${row.channel}:${row.externalProductId}`;
+  }
+
+  async function handleMapChannelProduct(row: UnmappedChannelProduct) {
+    if (!activeStoreId) return;
+    const key = unmappedRowKey(row);
+    const idProduct = mappingChoice[key];
+    if (!idProduct || savingMappingKey) return;
+
+    setSavingMappingKey(key);
+    try {
+      const result = await mapChannelProduct({
+        idStore: activeStoreId,
+        channel: row.channel,
+        externalProductId: row.externalProductId,
+        externalProductName: row.externalProductName,
+        idProduct,
+      });
+      setMappingChoice((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      showSuccess(
+        "Produto mapeado",
+        result.promotedOrders > 0
+          ? `${result.promotedOrders} pedido(s) criado(s) como venda.`
+          : "",
+      );
+      await Promise.all([loadUnmappedChannelProducts(), loadList()]);
+    } catch (error) {
+      showError(
+        "Erro ao mapear produto",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    } finally {
+      setSavingMappingKey(null);
     }
   }
 
@@ -1145,6 +1219,69 @@ export default function Sales() {
 
   return (
     <div className="flex flex-col gap-6">
+      {unmappedProducts.length > 0 && (
+        <SectionCard
+          title="Pendências de mapeamento"
+          description="Itens de pedidos vindos de canais externos (99Food, iFood…) que ainda não têm um produto interno correspondente — mapeie uma vez e todos os pedidos parados por causa dele viram venda na hora."
+        >
+          <div className="flex flex-col gap-3">
+            {unmappedProducts.map((row) => {
+              const key = unmappedRowKey(row);
+              return (
+                <div
+                  key={key}
+                  className="flex flex-col gap-3 rounded-md border border-hairline bg-card-alt px-3 py-3 sm:flex-row sm:items-end"
+                >
+                  <div className="flex-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
+                      {salesChannelLabel[row.channel as SalesChannel] ??
+                        row.channel}
+                    </p>
+                    <p className="text-[13px] font-medium text-ink">
+                      {row.externalProductName}
+                    </p>
+                    <p className="text-[12px] text-ink-subtle">
+                      {row.pendingEventCount} pedido(s) aguardando este
+                      mapeamento
+                    </p>
+                  </div>
+                  <div className="sm:w-64">
+                    <Select
+                      label="Produto interno"
+                      value={mappingChoice[key] ?? ""}
+                      onChange={(e) =>
+                        setMappingChoice((prev) => ({
+                          ...prev,
+                          [key]: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Selecione</option>
+                      {sellableProducts.map((product) => (
+                        <option
+                          key={product.idProduct}
+                          value={product.idProduct}
+                        >
+                          {productOptionLabel(product)}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                  <Button
+                    variant="primary"
+                    loading={savingMappingKey === key}
+                    disabled={!mappingChoice[key] || savingMappingKey !== null}
+                    onClick={() => handleMapChannelProduct(row)}
+                  >
+                    Salvar
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </SectionCard>
+      )}
+
       <SectionCard
         title="Vendas"
         action={
