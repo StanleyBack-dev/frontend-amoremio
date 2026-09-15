@@ -11,6 +11,10 @@ export const viewTitles: Record<
     title: "Fornecedores",
     subtitle: "Cadastro de fornecedores da loja",
   },
+  customers: {
+    title: "Clientes",
+    subtitle: "Cadastro de clientes da loja",
+  },
   recipes: {
     title: "Receitas",
     subtitle: "Fichas técnicas dos produtos finais",

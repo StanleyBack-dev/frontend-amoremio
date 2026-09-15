@@ -29,7 +29,6 @@ const brl = (value: number) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-    maximumFractionDigits: 0,
   }).format(value);
 
 function parseBucketDate(value: string): Date {
@@ -141,7 +140,7 @@ export default function SalesTimeSeriesChart({
               tick={{ fontSize: 11, fill: "#9C877E" }}
               axisLine={false}
               tickLine={false}
-              width={72}
+              width={92}
             />
             <Tooltip
               cursor={{ stroke: "#D8CABB", strokeWidth: 1 }}

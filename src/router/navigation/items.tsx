@@ -5,6 +5,7 @@ import {
   Boxes,
   ChefHat,
   ClipboardList,
+  Contact,
   CookingPot,
   LayoutDashboard,
   Package,
@@ -46,6 +47,7 @@ export const primaryNavigationLayout: PrimaryNavigationEntry[] = [
   { id: "products", label: "Produtos", icon: <Package size={20} /> },
   { id: "brands", label: "Marcas", icon: <BookmarkCheck size={20} /> },
   { id: "suppliers", label: "Fornecedores", icon: <Truck size={20} /> },
+  { id: "customers", label: "Clientes", icon: <Contact size={20} /> },
   { id: "recipes", label: "Receitas", icon: <ChefHat size={20} /> },
   { id: "inventory", label: "Estoque", icon: <Boxes size={20} /> },
   {

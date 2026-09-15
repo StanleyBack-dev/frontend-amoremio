@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Receipt } from "lucide-react";
+import { Plus, Receipt } from "lucide-react";
 import Button from "@atoms/Button";
 import Input from "@atoms/Input";
 import CurrencyInput from "@atoms/CurrencyInput";
@@ -19,6 +19,7 @@ import Pagination from "@/components/molecules/Pagination";
 import SectionCard from "@/components/organisms/SectionCard";
 import DataTable from "@/components/organisms/DataTable";
 import Drawer from "@/components/organisms/Drawer";
+import Modal from "@/components/organisms/Modal";
 import { useTablePagination } from "@/shared/pagination/useTablePagination";
 import { useToast } from "@/shared/toast/useToast";
 import { useLoading } from "@/shared/loading";
@@ -30,8 +31,14 @@ import {
 } from "@/features/catalog";
 import { fetchStoreStock, fetchStockMovements } from "@/features/inventory";
 import type { StockMovement } from "@/api/inventory/schema";
-import { formatDateOnlyDisplay, formatDateTimeDisplay } from "@/utils/format";
+import {
+  formatBrazilianPhone,
+  formatDateOnlyDisplay,
+  formatDateTimeDisplay,
+} from "@/utils/format";
 import type { Product } from "@/api/catalog/schema";
+import { createCustomer, fetchCustomers } from "@/features/customers";
+import type { Customer } from "@/api/customers/schema";
 import type {
   ListSalesOrdersParams,
   SalesOrder,
@@ -84,6 +91,14 @@ type StagedSalesItem = {
   unitPrice: number;
 };
 
+const emptyCustomerForm = {
+  name: "",
+  phone: "",
+  email: "",
+  address: "",
+  notes: "",
+};
+
 export default function Sales() {
   const { showError, showSuccess } = useToast();
   const { track } = useLoading();
@@ -105,7 +120,15 @@ export default function Sales() {
   const [composingNew, setComposingNew] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const [customer, setCustomer] = useState("");
+  // idCustomer drives the linked customer (a real FK, unlike Compras'
+  // free-text supplierName) — customerName is kept only as a display
+  // snapshot for legacy orders that predate this link.
+  const [idCustomer, setIdCustomer] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState("");
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customerModalOpen, setCustomerModalOpen] = useState(false);
+  const [customerForm, setCustomerForm] = useState(emptyCustomerForm);
+  const [savingCustomer, setSavingCustomer] = useState(false);
   const [orderDate, setOrderDate] = useState("");
   const [discount, setDiscount] = useState(0);
   const [discountMode, setDiscountMode] = useState<SalesDiscountMode>("VALOR");
@@ -234,6 +257,20 @@ export default function Sales() {
     }
   }, [activeStoreId]);
 
+  const loadCustomers = useCallback(async () => {
+    if (!activeStoreId) return;
+    try {
+      const result = await fetchCustomers({
+        idStore: activeStoreId,
+        limit: 500,
+        status: true,
+      });
+      setCustomers(result.items);
+    } catch {
+      setCustomers([]);
+    }
+  }, [activeStoreId]);
+
   useEffect(() => {
     void loadList();
   }, [loadList]);
@@ -241,6 +278,10 @@ export default function Sales() {
   useEffect(() => {
     void loadFilterOptions();
   }, [loadFilterOptions]);
+
+  useEffect(() => {
+    void loadCustomers();
+  }, [loadCustomers]);
 
   // Mirrors the calculator's derived values into Desconto/Comissão live, as
   // the user types — the whole point of the calculator is to skip doing this
@@ -265,7 +306,8 @@ export default function Sales() {
   }, [calcDiscount, calcNetReceived, composingNew, open]);
 
   function syncHeader(order: SalesOrder) {
-    setCustomer(order.customerName ?? "");
+    setIdCustomer(order.idCustomer ?? null);
+    setCustomerName(order.customerName ?? "");
     setOrderDate(order.orderDate.slice(0, 10));
     setDiscount(order.discountAmount ?? 0);
     setDiscountMode(order.discountMode ?? "VALOR");
@@ -342,7 +384,8 @@ export default function Sales() {
   function handleNew() {
     setOpen(null);
     setComposingNew(true);
-    setCustomer("");
+    setIdCustomer(null);
+    setCustomerName("");
     setOrderDate("");
     setDiscount(0);
     setDiscountMode("VALOR");
@@ -369,6 +412,7 @@ export default function Sales() {
   // waiting for the state update to flush (needed for the R$/% selector and
   // the calculator's "Aplicar", neither of which fires a blur event).
   async function saveHeader(next?: {
+    idCustomer?: string | null;
     discountMode?: SalesDiscountMode;
     discountPercent?: number;
     discount?: number;
@@ -379,7 +423,8 @@ export default function Sales() {
       const updated = await updateSalesOrderHeader({
         idStore: activeStoreId,
         idSalesOrder: open.idSalesOrder,
-        customerName: customer.trim(),
+        idCustomer:
+          next?.idCustomer !== undefined ? next.idCustomer : idCustomer,
         discountAmount: next?.discount ?? discount,
         discountMode: next?.discountMode ?? discountMode,
         discountPercent: next?.discountPercent ?? discountPercent,
@@ -419,6 +464,42 @@ export default function Sales() {
   function handleDiscountModeChange(mode: SalesDiscountMode) {
     setDiscountMode(mode);
     if (open) void saveHeader({ discountMode: mode });
+  }
+
+  function handleCustomerChange(nextIdCustomer: string) {
+    const value = nextIdCustomer || null;
+    setIdCustomer(value);
+    setCustomerName(customers.find((c) => c.idCustomer === value)?.name ?? "");
+    if (open) void saveHeader({ idCustomer: value });
+  }
+
+  async function handleCreateCustomer() {
+    if (!activeStoreId || savingCustomer) return;
+    const name = customerForm.name.trim();
+    if (!name) return;
+    setSavingCustomer(true);
+    try {
+      const created = await createCustomer({
+        idStore: activeStoreId,
+        name,
+        phone: customerForm.phone.trim() || undefined,
+        email: customerForm.email.trim() || undefined,
+        address: customerForm.address.trim() || undefined,
+        notes: customerForm.notes.trim() || undefined,
+      });
+      await loadCustomers();
+      handleCustomerChange(created.idCustomer);
+      setCustomerModalOpen(false);
+      setCustomerForm(emptyCustomerForm);
+      showSuccess("Cliente cadastrado", `"${created.name}" foi adicionado.`);
+    } catch (error) {
+      showError(
+        "Erro ao cadastrar cliente",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    } finally {
+      setSavingCustomer(false);
+    }
   }
 
   const liveLineTotal = useMemo(
@@ -513,7 +594,7 @@ export default function Sales() {
         });
         idSalesOrder = created.idSalesOrder;
         if (
-          customer.trim() ||
+          idCustomer ||
           discount > 0 ||
           discountPercent > 0 ||
           channel !== "BALCAO" ||
@@ -522,7 +603,7 @@ export default function Sales() {
           await updateSalesOrderHeader({
             idStore: activeStoreId,
             idSalesOrder,
-            customerName: customer.trim(),
+            idCustomer,
             discountAmount: discount,
             discountMode,
             discountPercent,
@@ -1236,7 +1317,7 @@ export default function Sales() {
         title={
           open ? `Venda ${salesOrderStatusLabel[open.status]}` : "Nova venda"
         }
-        subtitle={open?.customerName ?? undefined}
+        subtitle={customerName || open?.customerName || undefined}
       >
         {(open || composingNew) && (
           <div className="flex flex-col gap-5">
@@ -1248,13 +1329,41 @@ export default function Sales() {
             )}
             <SectionCard title="Dados da venda">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Input
-                  label="Cliente"
-                  value={customer}
-                  onChange={(e) => setCustomer(e.target.value)}
-                  onBlur={() => saveHeader()}
-                  disabled={!isOpen}
-                />
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
+                      Cliente
+                    </span>
+                    {isOpen && canManage && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomerForm(emptyCustomerForm);
+                          setCustomerModalOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600 hover:text-brand-700"
+                      >
+                        <Plus size={13} /> Novo cliente
+                      </button>
+                    )}
+                  </div>
+                  <Select
+                    value={idCustomer ?? ""}
+                    disabled={!isOpen}
+                    onChange={(e) => handleCustomerChange(e.target.value)}
+                  >
+                    <option value="">Sem cliente</option>
+                    {idCustomer &&
+                      !customers.some((c) => c.idCustomer === idCustomer) && (
+                        <option value={idCustomer}>{customerName}</option>
+                      )}
+                    {customers.map((c) => (
+                      <option key={c.idCustomer} value={c.idCustomer}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
                 <div>
                   <Input
                     label="Data da venda"
@@ -1645,6 +1754,78 @@ export default function Sales() {
       >
         {renderStatement()}
       </Drawer>
+
+      <Modal
+        open={customerModalOpen}
+        onClose={() => setCustomerModalOpen(false)}
+        width="lg"
+        title="Novo cliente"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => setCustomerModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              loading={savingCustomer}
+              disabled={savingCustomer || !customerForm.name.trim()}
+              onClick={handleCreateCustomer}
+            >
+              Cadastrar
+            </Button>
+          </>
+        }
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Input
+              label="Nome"
+              value={customerForm.name}
+              autoFocus
+              onChange={(e) =>
+                setCustomerForm({ ...customerForm, name: e.target.value })
+              }
+              placeholder="Ex.: Anna Luiza"
+            />
+          </div>
+          <Input
+            label="Telefone / WhatsApp"
+            inputMode="tel"
+            placeholder="(00) 00000-0000"
+            value={customerForm.phone}
+            onChange={(e) =>
+              setCustomerForm({
+                ...customerForm,
+                phone: formatBrazilianPhone(e.target.value),
+              })
+            }
+          />
+          <Input
+            label="E-mail"
+            type="email"
+            value={customerForm.email}
+            onChange={(e) =>
+              setCustomerForm({ ...customerForm, email: e.target.value })
+            }
+          />
+          <div className="sm:col-span-2">
+            <Input
+              label="Endereço"
+              value={customerForm.address}
+              onChange={(e) =>
+                setCustomerForm({ ...customerForm, address: e.target.value })
+              }
+            />
+          </div>
+        </div>
+        <p className="mt-2 text-[11px] text-ink-subtle">
+          O cliente fica disponível na página <strong>Clientes</strong> e em
+          todas as vendas da loja.
+        </p>
+      </Modal>
 
       <ConfirmDialog
         open={confirm !== null}

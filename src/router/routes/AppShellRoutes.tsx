@@ -4,6 +4,7 @@ import AppLayout from "../AppLayout";
 import {
   authRoutePaths,
   brandRoutePaths,
+  customerRoutePaths,
   dashboardRoutePaths,
   inventoryRoutePaths,
   productRoutePaths,
@@ -25,6 +26,7 @@ const Dashboard = lazy(() => import("../../pages/Dashboard"));
 const Products = lazy(() => import("../../pages/products/Products"));
 const Brands = lazy(() => import("../../pages/brands/Brands"));
 const Suppliers = lazy(() => import("../../pages/suppliers/Suppliers"));
+const Customers = lazy(() => import("../../pages/customers/Customers"));
 const Recipes = lazy(() => import("../../pages/recipes/Recipes"));
 const Inventory = lazy(() => import("../../pages/inventory/Inventory"));
 const ShoppingList = lazy(
@@ -73,6 +75,10 @@ export function AppShellRoutes({ userId }: AppShellRoutesProps) {
       <Route
         path={supplierRoutePaths.list}
         element={withPageSuspense(<Suppliers />)}
+      />
+      <Route
+        path={customerRoutePaths.list}
+        element={withPageSuspense(<Customers />)}
       />
       <Route
         path={recipeRoutePaths.list}

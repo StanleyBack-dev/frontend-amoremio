@@ -42,6 +42,7 @@ export const SalesOrderItemSchema = z.object({
 export const SalesOrderSchema = z.object({
   idSalesOrder: z.string(),
   idStore: z.string(),
+  idCustomer: z.string().nullable().optional(),
   customerName: z.string().nullable().optional(),
   orderDate: z.string(),
   status: SalesOrderStatusSchema,
@@ -91,6 +92,7 @@ export interface ListSalesOrdersParams {
 
 export interface CreateSalesOrderPayload {
   idStore: string;
+  idCustomer?: string;
   customerName?: string;
   orderDate?: string;
   salesChannel?: SalesChannel;
@@ -100,6 +102,7 @@ export interface CreateSalesOrderPayload {
 export interface UpdateSalesOrderHeaderPayload {
   idStore: string;
   idSalesOrder: string;
+  idCustomer?: string | null;
   customerName?: string;
   orderDate?: string;
   salesChannel?: SalesChannel;

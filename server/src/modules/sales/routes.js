@@ -66,6 +66,7 @@ router.post(
     createSalesOrder(
       {
         idStore: req.body?.idStore,
+        idCustomer: req.body?.idCustomer,
         customerName: req.body?.customerName,
         orderDate: req.body?.orderDate,
         salesChannel: req.body?.salesChannel,

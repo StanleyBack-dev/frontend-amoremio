@@ -13,8 +13,11 @@ export const GET_FINANCE_DASHBOARD_QUERY = `
         grossMarginPercent
         purchaseCount
         salesCount
+        productionCost
       }
       stockValue
+      customersCount
+      giveawaysCost
       topProducts {
         idProduct
         productName
@@ -32,6 +35,12 @@ export const GET_FINANCE_DASHBOARD_QUERY = `
         netProfit
         marginPercent
       }
+      topProductionInputs {
+        idProduct
+        productName
+        quantityConsumed
+        cost
+      }
       granularity
       timeSeries {
         date
@@ -40,6 +49,14 @@ export const GET_FINANCE_DASHBOARD_QUERY = `
       }
       salesByChannel {
         channel
+        orderCount
+        grossSales
+        commission
+        netSales
+      }
+      salesByCustomer {
+        idCustomer
+        customerName
         orderCount
         grossSales
         commission
