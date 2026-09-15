@@ -25,6 +25,7 @@ export function hasPageAccess(
     view === "products" ||
     view === "brands" ||
     view === "suppliers" ||
+    view === "customers" ||
     view === "recipes" ||
     view === "inventory" ||
     view === "shoppingList" ||

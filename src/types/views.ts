@@ -3,6 +3,7 @@ export type ActiveView =
   | "products"
   | "brands"
   | "suppliers"
+  | "customers"
   | "recipes"
   | "inventory"
   | "shoppingList"

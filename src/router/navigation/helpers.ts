@@ -1,6 +1,7 @@
 import type { ActiveView } from "../../types/views";
 import {
   brandRoutePaths,
+  customerRoutePaths,
   dashboardRoutePaths,
   inventoryRoutePaths,
   productRoutePaths,
@@ -24,6 +25,10 @@ export function getActiveView(pathname: string): ActiveView {
 
   if (pathname.startsWith(supplierRoutePaths.list)) {
     return "suppliers";
+  }
+
+  if (pathname.startsWith(customerRoutePaths.list)) {
+    return "customers";
   }
 
   if (pathname.startsWith(productRoutePaths.list)) {
@@ -88,6 +93,8 @@ export function getPathForView(view: ActiveView): string {
       return brandRoutePaths.list;
     case "suppliers":
       return supplierRoutePaths.list;
+    case "customers":
+      return customerRoutePaths.list;
     case "recipes":
       return recipeRoutePaths.list;
     case "inventory":

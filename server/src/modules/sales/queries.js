@@ -11,6 +11,7 @@ const ITEM_FIELDS = `
 const ORDER_FIELDS = `
   idSalesOrder
   idStore
+  idCustomer
   customerName
   orderDate
   status

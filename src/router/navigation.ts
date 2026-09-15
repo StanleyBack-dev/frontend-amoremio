@@ -1,6 +1,7 @@
 export {
   authRoutePaths,
   brandRoutePaths,
+  customerRoutePaths,
   dashboardRoutePaths,
   inventoryRoutePaths,
   productRoutePaths,

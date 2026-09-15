@@ -5,6 +5,7 @@ export const routePaths: Record<ActiveView, string> = {
   products: "/produtos",
   brands: "/marcas",
   suppliers: "/fornecedores",
+  customers: "/clientes",
   recipes: "/receitas",
   inventory: "/estoque",
   shoppingList: "/lista-de-compras",
@@ -28,6 +29,10 @@ export const brandRoutePaths = {
 
 export const supplierRoutePaths = {
   list: "/fornecedores",
+};
+
+export const customerRoutePaths = {
+  list: "/clientes",
 };
 
 export const recipeRoutePaths = {
