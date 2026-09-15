@@ -13,8 +13,11 @@ export const FinanceDashboardSchema = z.object({
     grossMarginPercent: z.number(),
     purchaseCount: z.number(),
     salesCount: z.number(),
+    productionCost: z.number().default(0),
   }),
   stockValue: z.number(),
+  customersCount: z.number().default(0),
+  giveawaysCost: z.number().default(0),
   topProducts: z
     .object({
       idProduct: z.string(),
@@ -37,6 +40,15 @@ export const FinanceDashboardSchema = z.object({
     })
     .array()
     .default([]),
+  topProductionInputs: z
+    .object({
+      idProduct: z.string(),
+      productName: z.string(),
+      quantityConsumed: z.number(),
+      cost: z.number(),
+    })
+    .array()
+    .default([]),
   granularity: z.enum(["DAY", "WEEK", "MONTH"]),
   timeSeries: z
     .object({
@@ -54,6 +66,17 @@ export const FinanceDashboardSchema = z.object({
       netSales: z.number(),
     })
     .array(),
+  salesByCustomer: z
+    .object({
+      idCustomer: z.string().nullable(),
+      customerName: z.string(),
+      orderCount: z.number(),
+      grossSales: z.number(),
+      commission: z.number(),
+      netSales: z.number(),
+    })
+    .array()
+    .default([]),
 });
 
 export type FinanceDashboard = z.infer<typeof FinanceDashboardSchema>;

@@ -2,6 +2,7 @@ import {
   Bar,
   BarChart,
   Cell,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -27,7 +28,6 @@ const brl = (value: number) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-    maximumFractionDigits: 0,
   }).format(value);
 
 function truncate(label: string, max = 22): string {
@@ -54,10 +54,11 @@ export default function TopProductsBarChart({
       <BarChart
         layout="vertical"
         data={data}
-        margin={{ top: 4, right: 24, left: 0, bottom: 4 }}
+        margin={{ top: 4, right: 64, left: 0, bottom: 4 }}
         barCategoryGap={10}
       >
-        <XAxis type="number" hide />
+        {/* 20% headroom so the value label past the longest bar never clips. */}
+        <XAxis type="number" hide domain={[0, (dataMax: number) => dataMax * 1.2]} />
         <YAxis
           type="category"
           dataKey="productName"
@@ -110,6 +111,12 @@ export default function TopProductsBarChart({
               }}
             />
           ))}
+          <LabelList
+            dataKey="revenue"
+            position="right"
+            formatter={(value) => brl(Number(value ?? 0))}
+            style={{ fontSize: 11, fontWeight: 600, fill: "#33231F" }}
+          />
         </Bar>
       </BarChart>
     </ResponsiveContainer>
