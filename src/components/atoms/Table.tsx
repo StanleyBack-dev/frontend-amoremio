@@ -28,8 +28,14 @@ interface TableProps<T> {
 }
 
 // Columns holding row controls rather than data — kept out of the mobile card's
-// title/subtitle/detail derivation and pinned to the card header instead.
+// title/subtitle/detail derivation and pinned to the card header instead. Any
+// column without a label (icon-only buttons such as "extrato"/"duplicar") counts
+// too, otherwise it would take over the card's title slot.
 const CONTROL_KEYS = new Set(["actions", "__view"]);
+
+function isControlColumn<T>(col: TableColumn<T>): boolean {
+  return CONTROL_KEYS.has(col.key as string) || col.label === "";
+}
 
 function cellValue<T>(col: TableColumn<T>, row: T): React.ReactNode {
   return col.render
@@ -178,12 +184,8 @@ export default function Table<T>({
 
   // Mobile card layout: first data column is the title, second the subtitle,
   // the rest collapse into a label/value list behind a chevron.
-  const controlColumns = columns.filter((col) =>
-    CONTROL_KEYS.has(col.key as string),
-  );
-  const dataColumns = columns.filter(
-    (col) => !CONTROL_KEYS.has(col.key as string),
-  );
+  const controlColumns = columns.filter(isControlColumn);
+  const dataColumns = columns.filter((col) => !isControlColumn(col));
   const [titleColumn, subtitleColumn, ...detailColumns] = dataColumns;
 
   return (

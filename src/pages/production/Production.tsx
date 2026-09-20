@@ -1150,8 +1150,15 @@ export default function Production() {
               key: "productionDate",
               label: "Data",
               render: (row) => formatDateOnlyDisplay(row.productionDate),
+              // Mobile card: recipe as the title, the rest as the subtitle.
+              mobileRender: (row) => row.recipeName,
             },
-            { key: "recipeName", label: "Receita" },
+            {
+              key: "recipeName",
+              label: "Receita",
+              mobileRender: (row) =>
+                `${formatDateOnlyDisplay(row.productionDate)} · ${productionOrderStatusLabel[row.status]}`,
+            },
             {
               key: "batches",
               label: "Lotes",

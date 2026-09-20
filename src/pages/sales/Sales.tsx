@@ -1390,11 +1390,15 @@ export default function Sales() {
               key: "orderDate",
               label: "Data",
               render: (row) => formatDateOnlyDisplay(row.orderDate),
+              // Mobile card: customer as the title, the rest as the subtitle.
+              mobileRender: (row) => row.customerName ?? "Sem cliente",
             },
             {
               key: "customerName",
               label: "Cliente",
               render: (row) => row.customerName ?? "—",
+              mobileRender: (row) =>
+                `${formatDateOnlyDisplay(row.orderDate)} · ${salesChannelLabel[row.salesChannel]} · ${brl(row.total)}`,
             },
             {
               key: "salesChannel",
