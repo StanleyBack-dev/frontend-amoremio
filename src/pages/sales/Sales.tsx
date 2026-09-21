@@ -494,6 +494,26 @@ export default function Sales() {
     }
   }
 
+  // Same reasoning as `saveOrderDate`: after confirmation the channel is a
+  // correctable label, but it has to travel alone in the request.
+  async function saveChannel(next: SalesChannel) {
+    if (!activeStoreId || !open) return;
+    try {
+      const updated = await updateSalesOrderHeader({
+        idStore: activeStoreId,
+        idSalesOrder: open.idSalesOrder,
+        salesChannel: next,
+      });
+      setOpen(updated);
+    } catch (error) {
+      setChannel(open.salesChannel);
+      showError(
+        "Erro ao salvar o canal",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    }
+  }
+
   function handleDiscountModeChange(mode: SalesDiscountMode) {
     setDiscountMode(mode);
     if (open) void saveHeader({ discountMode: mode });
@@ -801,8 +821,8 @@ export default function Sales() {
   }
 
   const isOpen = composingNew || open?.status === "ABERTA";
-  // The sale date stays correctable after confirmation — every other header
-  // field locks. Only a cancelled order is fully read-only.
+  // The sale date and channel stay correctable after confirmation — every
+  // other header field locks. Only a cancelled order is fully read-only.
   const canEditDate = composingNew || open?.status !== "CANCELADA";
 
   // While the sale is editable, the discount / total follow the fields being
@@ -1516,7 +1536,7 @@ export default function Sales() {
                   />
                   {!isOpen && canEditDate && (
                     <p className="mt-1 text-[11px] text-ink-subtle">
-                      Único dado ainda editável após a confirmação.
+                      Ainda editável após a confirmação, sem alterar valores.
                     </p>
                   )}
                 </div>
@@ -1524,10 +1544,14 @@ export default function Sales() {
                   label="Canal de venda"
                   value={channel}
                   onChange={(e) => {
-                    setChannel(e.target.value as SalesChannel);
+                    const next = e.target.value as SalesChannel;
+                    setChannel(next);
+                    if (!isOpen && open) void saveChannel(next);
                   }}
-                  onBlur={() => saveHeader()}
-                  disabled={!isOpen}
+                  onBlur={() => {
+                    if (isOpen) void saveHeader();
+                  }}
+                  disabled={!canEditDate}
                 >
                   {salesChannelOptions.map((option) => (
                     <option key={option.value} value={option.value}>
