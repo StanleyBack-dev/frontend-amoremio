@@ -55,6 +55,8 @@ const channelLabel: Record<string, string> = {
   AIQFOME: "aiqfome",
   WHATSAPP: "WhatsApp",
   TELEFONE: "Telefone",
+  FACULDADE: "Faculdade",
+  PESSOAL: "Pessoal",
   OUTRO: "Outro",
 };
 
