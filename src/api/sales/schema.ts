@@ -18,6 +18,8 @@ export const SalesChannelSchema = z.enum([
   "TELEFONE",
   "FACULDADE",
   "PESSOAL",
+  "FAMILIA",
+  "TRABALHO",
   "OUTRO",
 ]);
 
