@@ -57,6 +57,8 @@ const channelLabel: Record<string, string> = {
   TELEFONE: "Telefone",
   FACULDADE: "Faculdade",
   PESSOAL: "Pessoal",
+  FAMILIA: "Família",
+  TRABALHO: "Trabalho",
   OUTRO: "Outro",
 };
 

@@ -131,6 +131,8 @@ export const salesChannelLabel: Record<SalesChannel, string> = {
   TELEFONE: "Telefone",
   FACULDADE: "Faculdade",
   PESSOAL: "Pessoal",
+  FAMILIA: "Família",
+  TRABALHO: "Trabalho",
   OUTRO: "Outro",
 };
 
