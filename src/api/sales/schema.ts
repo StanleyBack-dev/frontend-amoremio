@@ -17,6 +17,7 @@ export const SalesChannelSchema = z.enum([
   "WHATSAPP",
   "TELEFONE",
   "FACULDADE",
+  "PESSOAL",
   "OUTRO",
 ]);
 
