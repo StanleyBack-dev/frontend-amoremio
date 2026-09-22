@@ -83,6 +83,8 @@ export interface UpdatePurchaseHeaderPayload {
   idPurchase: string;
   supplierName?: string;
   purchaseDate?: string;
+  createdAt?: string;
+  finalizedAt?: string;
   freightAmount?: number;
   discountAmount?: number;
   discountMode?: PurchaseDiscountMode;

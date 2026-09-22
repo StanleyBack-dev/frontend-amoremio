@@ -155,6 +155,11 @@ export default function Purchases() {
   const [linkedList, setLinkedList] = useState<ShoppingList | null>(null);
 
   const [supplier, setSupplier] = useState("");
+  const [purchaseDate, setPurchaseDate] = useState("");
+  // "Início" and "término" mirror createdAt/finalizedAt — only meaningful
+  // once the purchase record exists, so they stay blank while composing.
+  const [purchaseStart, setPurchaseStart] = useState("");
+  const [purchaseEnd, setPurchaseEnd] = useState("");
   const [freight, setFreight] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [discountMode, setDiscountMode] =
@@ -310,6 +315,9 @@ export default function Purchases() {
 
   function syncHeaderFields(purchase: Purchase) {
     setSupplier(purchase.supplierName ?? "");
+    setPurchaseDate(purchase.purchaseDate.slice(0, 10));
+    setPurchaseStart(purchase.createdAt.slice(0, 10));
+    setPurchaseEnd(purchase.finalizedAt ? purchase.finalizedAt.slice(0, 10) : "");
     setFreight(purchase.freightAmount ?? 0);
     setDiscount(purchase.discountAmount ?? 0);
     setDiscountMode(purchase.discountMode ?? "VALOR");
@@ -347,6 +355,9 @@ export default function Purchases() {
     setComposingNew(true);
     setLinkedList(null);
     setSupplier("");
+    setPurchaseDate("");
+    setPurchaseStart("");
+    setPurchaseEnd("");
     setFreight(0);
     setDiscount(0);
     setDiscountMode("VALOR");
@@ -434,6 +445,65 @@ export default function Purchases() {
     if (open) void saveHeader({ supplierName: name });
   }
 
+  // Kept separate from `saveHeader`, same pattern as the sale date/channel
+  // fix: the purchase date and the início/fim timestamps stay correctable
+  // after the purchase is finalized, so each travels alone in its own
+  // request instead of riding along with (and getting blocked by) the
+  // frozen financial fields.
+  async function savePurchaseDate() {
+    if (!activeStoreId || !open) return;
+    try {
+      const updated = await updatePurchaseHeader({
+        idStore: activeStoreId,
+        idPurchase: open.idPurchase,
+        purchaseDate: purchaseDate || undefined,
+      });
+      setOpen(updated);
+      syncHeaderFields(updated);
+    } catch (error) {
+      showError(
+        "Erro ao salvar a data da compra",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    }
+  }
+
+  async function savePurchaseStart() {
+    if (!activeStoreId || !open) return;
+    try {
+      const updated = await updatePurchaseHeader({
+        idStore: activeStoreId,
+        idPurchase: open.idPurchase,
+        createdAt: purchaseStart || undefined,
+      });
+      setOpen(updated);
+      syncHeaderFields(updated);
+    } catch (error) {
+      showError(
+        "Erro ao salvar o início da compra",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    }
+  }
+
+  async function savePurchaseEnd() {
+    if (!activeStoreId || !open) return;
+    try {
+      const updated = await updatePurchaseHeader({
+        idStore: activeStoreId,
+        idPurchase: open.idPurchase,
+        finalizedAt: purchaseEnd || undefined,
+      });
+      setOpen(updated);
+      syncHeaderFields(updated);
+    } catch (error) {
+      showError(
+        "Erro ao salvar o término da compra",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    }
+  }
+
   function handleDiscountModeChange(mode: PurchaseDiscountMode) {
     setDiscountMode(mode);
     if (open) void saveHeader({ discountMode: mode });
@@ -500,7 +570,10 @@ export default function Purchases() {
       // First item of a new purchase: create the RASCUNHO record now and
       // carry over whatever header fields were already typed.
       if (!idPurchase) {
-        const draft = await createPurchaseDraft({ idStore: activeStoreId });
+        const draft = await createPurchaseDraft({
+          idStore: activeStoreId,
+          purchaseDate: purchaseDate || undefined,
+        });
         idPurchase = draft.idPurchase;
         if (
           supplier.trim() ||
@@ -1051,6 +1124,21 @@ export default function Purchases() {
                     ))}
                   </Select>
                 </div>
+                <div>
+                  <Input
+                    label="Data da compra"
+                    type="date"
+                    value={purchaseDate}
+                    onChange={(e) => setPurchaseDate(e.target.value)}
+                    onBlur={savePurchaseDate}
+                    disabled={!supplierEditable}
+                  />
+                  {!isDraft && supplierEditable && (
+                    <p className="mt-1 text-[11px] text-ink-subtle">
+                      Ainda editável após a finalização, sem alterar valores.
+                    </p>
+                  )}
+                </div>
                 <CurrencyInput
                   label="Frete"
                   value={freight}
@@ -1099,6 +1187,37 @@ export default function Purchases() {
                     </p>
                   )}
                 </div>
+                {/* Início/término only exist once the purchase record does —
+                    nothing to show yet while still composing a new one. */}
+                {open && (
+                  <>
+                    <div>
+                      <Input
+                        label="Início da compra"
+                        type="date"
+                        value={purchaseStart}
+                        onChange={(e) => setPurchaseStart(e.target.value)}
+                        onBlur={savePurchaseStart}
+                        disabled={!supplierEditable}
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Término da compra"
+                        type="date"
+                        value={purchaseEnd}
+                        onChange={(e) => setPurchaseEnd(e.target.value)}
+                        onBlur={savePurchaseEnd}
+                        disabled={open.status !== "FINALIZADA"}
+                      />
+                      {open.status !== "FINALIZADA" && (
+                        <p className="mt-1 text-[11px] text-ink-subtle">
+                          Disponível após finalizar a compra.
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </SectionCard>
 
