@@ -317,7 +317,9 @@ export default function Purchases() {
     setSupplier(purchase.supplierName ?? "");
     setPurchaseDate(purchase.purchaseDate.slice(0, 10));
     setPurchaseStart(purchase.createdAt.slice(0, 10));
-    setPurchaseEnd(purchase.finalizedAt ? purchase.finalizedAt.slice(0, 10) : "");
+    setPurchaseEnd(
+      purchase.finalizedAt ? purchase.finalizedAt.slice(0, 10) : "",
+    );
     setFreight(purchase.freightAmount ?? 0);
     setDiscount(purchase.discountAmount ?? 0);
     setDiscountMode(purchase.discountMode ?? "VALOR");
