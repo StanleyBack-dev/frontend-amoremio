@@ -76,6 +76,16 @@ import type {
 const round2 = (value: number) => Math.round(value * 100) / 100;
 const round6 = (value: number) => Math.round(value * 1_000_000) / 1_000_000;
 
+// createdAt/finalizedAt are timestamptz — a bare "YYYY-MM-DD" from the date
+// input would be parsed as UTC midnight, which renders as the previous day
+// everywhere the app shows it in local time (Brazil is UTC-3). Anchoring to
+// noon UTC keeps the selected calendar day stable regardless of where it's
+// displayed. purchaseDate doesn't need this: it's a plain "date" column, no
+// time component to shift.
+function dateOnlyToNoonUtc(value: string): string | undefined {
+  return value ? `${value}T12:00:00.000Z` : undefined;
+}
+
 const brl = (value: number) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -476,7 +486,7 @@ export default function Purchases() {
       const updated = await updatePurchaseHeader({
         idStore: activeStoreId,
         idPurchase: open.idPurchase,
-        createdAt: purchaseStart || undefined,
+        createdAt: dateOnlyToNoonUtc(purchaseStart),
       });
       setOpen(updated);
       syncHeaderFields(updated);
@@ -494,7 +504,7 @@ export default function Purchases() {
       const updated = await updatePurchaseHeader({
         idStore: activeStoreId,
         idPurchase: open.idPurchase,
-        finalizedAt: purchaseEnd || undefined,
+        finalizedAt: dateOnlyToNoonUtc(purchaseEnd),
       });
       setOpen(updated);
       syncHeaderFields(updated);
