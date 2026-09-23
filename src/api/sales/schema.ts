@@ -40,6 +40,8 @@ export const SalesOrderItemSchema = z.object({
   quantity: z.number(),
   unitPrice: z.number(),
   lineTotal: z.number(),
+  // Only present on single-order responses (not on the order list).
+  productCoverThumbnailUrl: z.string().nullable().optional(),
 });
 
 export const SalesOrderSchema = z.object({

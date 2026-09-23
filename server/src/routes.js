@@ -1,4 +1,5 @@
 import { Router } from "express";
+import attachmentsRoutes from "./modules/attachments/routes.js";
 import authRoutes from "./modules/auth/routes.js";
 import brandsRoutes from "./modules/brands/routes.js";
 import catalogRoutes from "./modules/catalog/routes.js";
@@ -28,6 +29,7 @@ router.use("/auth", authRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/stores", storesRoutes);
 router.use("/products", catalogRoutes);
+router.use("/attachments", attachmentsRoutes);
 router.use("/brands", brandsRoutes);
 router.use("/suppliers", suppliersRoutes);
 router.use("/customers", customersRoutes);

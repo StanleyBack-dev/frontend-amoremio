@@ -7,6 +7,7 @@ import Select from "@atoms/Select";
 import Badge from "@atoms/Badge";
 import FilterPanel from "@/components/molecules/FilterPanel";
 import Pagination from "@/components/molecules/Pagination";
+import ProductNameCell from "@/components/molecules/ProductNameCell";
 import SectionCard from "@/components/organisms/SectionCard";
 import DataTable from "@/components/organisms/DataTable";
 import Drawer from "@/components/organisms/Drawer";
@@ -428,7 +429,16 @@ export default function Inventory() {
           onView={openAdjust}
           viewLabel="Ver / ajustar estoque"
           columns={[
-            { key: "productName", label: "Produto" },
+            {
+              key: "productName",
+              label: "Produto",
+              render: (row) => (
+                <ProductNameCell
+                  name={row.productName}
+                  thumbnailUrl={row.productCoverThumbnailUrl}
+                />
+              ),
+            },
             {
               key: "brand",
               label: "Marca",

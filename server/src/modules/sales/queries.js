@@ -6,6 +6,7 @@ const ITEM_FIELDS = `
   quantity
   unitPrice
   lineTotal
+  productCoverThumbnailUrl
 `;
 
 const ORDER_FIELDS = `

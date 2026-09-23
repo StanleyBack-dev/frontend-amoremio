@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AttachmentSchema } from "../attachments/schema";
 import type { PaginatedResponse } from "../shared/contracts";
 
 export const UnitOfMeasureSchema = z.enum([
@@ -50,6 +51,9 @@ export const ProductSchema = z.object({
   createdByUserName: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  // Lists carry only the cover; detail/update responses carry every image.
+  images: z.array(AttachmentSchema).optional().default([]),
+  coverThumbnailUrl: z.string().nullable().optional(),
 });
 
 export const CreateProductPayloadSchema = z.object({

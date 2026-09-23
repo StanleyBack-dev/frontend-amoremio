@@ -1,3 +1,7 @@
+import { ATTACHMENT_FIELDS } from "../attachments/queries.js";
+
+// `images` holds only the cover on list queries and every image on
+// getProductById/updateProduct (see ProductsResolver in the backend).
 const PRODUCT_FIELDS = `
   idProduct
   idStore
@@ -15,6 +19,10 @@ const PRODUCT_FIELDS = `
   createdByUserName
   createdAt
   updatedAt
+  coverThumbnailUrl
+  images {
+    ${ATTACHMENT_FIELDS}
+  }
 `;
 
 export const GET_STORE_PRODUCTS_QUERY = `

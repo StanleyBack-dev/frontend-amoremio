@@ -7,6 +7,8 @@ import NumberInput from "@atoms/NumberInput";
 import Select from "@atoms/Select";
 import Badge from "@atoms/Badge";
 import FilterPanel from "@/components/molecules/FilterPanel";
+import ImageAttachmentsField from "@/components/molecules/ImageAttachmentsField";
+import ProductNameCell from "@/components/molecules/ProductNameCell";
 import Pagination from "@/components/molecules/Pagination";
 import SectionCard from "@/components/organisms/SectionCard";
 import DataTable from "@/components/organisms/DataTable";
@@ -30,6 +32,15 @@ import {
   updateProduct,
 } from "@/features/catalog";
 import { createBrand, fetchBrands } from "@/features/brands";
+import {
+  fetchAttachments,
+  hasDraftChanges,
+  releaseDraft,
+  syncDraftImages,
+  toDraft,
+  type DraftImage,
+} from "@/features/attachments";
+import type { Attachment } from "@/api/attachments/schema";
 import type { Brand } from "@/api/brands/schema";
 import type {
   ListProductsParams,
@@ -123,6 +134,12 @@ export default function Products() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formOpen, setFormOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Photos are edited as a local draft and only synced with the server on
+  // Save: `savedImages` is what the server has, `imageDraft` what the form
+  // shows (existing + newly picked, in the chosen order).
+  const [savedImages, setSavedImages] = useState<Attachment[]>([]);
+  const [imageDraft, setImageDraft] = useState<DraftImage[]>([]);
+  const [loadingImages, setLoadingImages] = useState(false);
 
   const [brandModalOpen, setBrandModalOpen] = useState(false);
   const [newBrandName, setNewBrandName] = useState("");
@@ -243,12 +260,51 @@ export default function Products() {
 
   const hasActiveFilters = Object.values(filters).some(Boolean);
 
+  function resetImages(images: Attachment[]) {
+    setImageDraft((current) => {
+      releaseDraft(current);
+      return toDraft(images);
+    });
+    setSavedImages(images);
+  }
+
   function openCreate() {
     setForm(emptyForm);
+    resetImages([]);
     setFormOpen(true);
   }
 
+  function closeForm() {
+    setFormOpen(false);
+    setForm(emptyForm);
+    resetImages([]);
+  }
+
+  // List rows only carry the cover, so the full gallery is fetched on open.
+  async function loadFormImages(product: Product) {
+    if (!activeStoreId) return;
+    resetImages(product.images);
+    setLoadingImages(true);
+    try {
+      resetImages(
+        await fetchAttachments({
+          idStore: activeStoreId,
+          ownerType: "PRODUCT",
+          ownerId: product.idProduct,
+        }),
+      );
+    } catch (error) {
+      showError(
+        "Erro ao carregar fotos",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+    } finally {
+      setLoadingImages(false);
+    }
+  }
+
   function openEdit(product: Product) {
+    void loadFormImages(product);
     setForm({
       idProduct: product.idProduct,
       name: product.name,
@@ -272,40 +328,65 @@ export default function Products() {
 
     setSaving(true);
     try {
-      if (form.idProduct) {
-        await updateProduct({
-          idStore: activeStoreId,
-          idProduct: form.idProduct,
-          name,
-          // Explicit `null` clears the brand; an omitted/undefined key would
-          // leave the previously saved brand untouched on the backend.
-          brand: form.brand.trim() || null,
-          kind: form.kind,
-          unit: form.unit,
-          packagingUnit: form.packagingUnit,
-          packSize: form.packSize > 0 ? form.packSize : 1,
-          salePrice,
-          status: form.status,
-        });
-        showSuccess("Produto atualizado", "");
-      } else {
-        await createProduct({
-          idStore: activeStoreId,
-          name,
-          brand: form.brand.trim() || undefined,
-          kind: form.kind,
-          unit: form.unit,
-          packagingUnit: form.packagingUnit,
-          packSize: form.packSize > 0 ? form.packSize : 1,
-          salePrice,
-        });
-        showSuccess(
-          "Produto criado",
-          "O código (SKU) foi gerado automaticamente.",
+      const product = form.idProduct
+        ? await updateProduct({
+            idStore: activeStoreId,
+            idProduct: form.idProduct,
+            name,
+            // Explicit `null` clears the brand; an omitted/undefined key would
+            // leave the previously saved brand untouched on the backend.
+            brand: form.brand.trim() || null,
+            kind: form.kind,
+            unit: form.unit,
+            packagingUnit: form.packagingUnit,
+            packSize: form.packSize > 0 ? form.packSize : 1,
+            salePrice,
+            status: form.status,
+          })
+        : await createProduct({
+            idStore: activeStoreId,
+            name,
+            brand: form.brand.trim() || undefined,
+            kind: form.kind,
+            unit: form.unit,
+            packagingUnit: form.packagingUnit,
+            packSize: form.packSize > 0 ? form.packSize : 1,
+            salePrice,
+          });
+
+      if (hasDraftChanges(savedImages, imageDraft)) {
+        const result = await syncDraftImages(
+          {
+            idStore: activeStoreId,
+            ownerType: "PRODUCT",
+            ownerId: product.idProduct,
+          },
+          savedImages,
+          imageDraft,
         );
+        if (result.errors.length > 0) {
+          // The product itself is saved: keep the drawer open on it, showing
+          // what the server really has, so the failed photos can be retried.
+          resetImages(result.images);
+          setForm((current) => ({
+            ...current,
+            idProduct: product.idProduct,
+            sku: product.sku ?? "",
+          }));
+          showError(
+            "Produto salvo, mas algumas fotos falharam",
+            result.errors.join(" "),
+          );
+          await Promise.all([load(), loadFilterOptions()]);
+          return;
+        }
       }
-      setFormOpen(false);
-      setForm(emptyForm);
+
+      showSuccess(
+        form.idProduct ? "Produto atualizado" : "Produto criado",
+        form.idProduct ? "" : "O código (SKU) foi gerado automaticamente.",
+      );
+      closeForm();
       await Promise.all([load(), loadFilterOptions()]);
     } catch (error) {
       showError(
@@ -447,7 +528,16 @@ export default function Products() {
           onView={openEdit}
           viewLabel="Ver / editar produto"
           columns={[
-            { key: "name", label: "Nome" },
+            {
+              key: "name",
+              label: "Nome",
+              render: (row) => (
+                <ProductNameCell
+                  name={row.name}
+                  thumbnailUrl={row.coverThumbnailUrl}
+                />
+              ),
+            },
             {
               key: "brand",
               label: "Marca",
@@ -522,10 +612,7 @@ export default function Products() {
 
       <Drawer
         open={formOpen}
-        onClose={() => {
-          setFormOpen(false);
-          setForm(emptyForm);
-        }}
+        onClose={closeForm}
         title={
           form.idProduct
             ? canManage
@@ -537,13 +624,7 @@ export default function Products() {
         footer={
           canManage ? (
             <>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setFormOpen(false);
-                  setForm(emptyForm);
-                }}
-              >
+              <Button variant="outline" onClick={closeForm}>
                 Cancelar
               </Button>
               <Button
@@ -556,19 +637,19 @@ export default function Products() {
               </Button>
             </>
           ) : (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setFormOpen(false);
-                setForm(emptyForm);
-              }}
-            >
+            <Button variant="outline" onClick={closeForm}>
               Fechar
             </Button>
           )
         }
       >
         <div className="grid grid-cols-1 gap-4">
+          <ImageAttachmentsField
+            images={imageDraft}
+            onChange={setImageDraft}
+            loading={loadingImages}
+            disabled={!canManage || saving}
+          />
           <Input
             label="Nome"
             value={form.name}

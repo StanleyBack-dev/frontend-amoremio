@@ -16,6 +16,7 @@ import Badge from "@atoms/Badge";
 import ConfirmDialog from "@/components/molecules/ConfirmDialog";
 import FilterPanel from "@/components/molecules/FilterPanel";
 import Pagination from "@/components/molecules/Pagination";
+import ProductNameCell from "@/components/molecules/ProductNameCell";
 import SectionCard from "@/components/organisms/SectionCard";
 import DataTable from "@/components/organisms/DataTable";
 import Drawer from "@/components/organisms/Drawer";
@@ -1796,7 +1797,16 @@ export default function Sales() {
                 getId={(row) => row.idSalesOrderItem}
                 emptyMessage="Nenhum item adicionado."
                 columns={[
-                  { key: "productName", label: "Produto" },
+                  {
+                    key: "productName",
+                    label: "Produto",
+                    render: (row) => (
+                      <ProductNameCell
+                        name={row.productName}
+                        thumbnailUrl={row.productCoverThumbnailUrl}
+                      />
+                    ),
+                  },
                   {
                     key: "quantity",
                     label: "Qtd.",
