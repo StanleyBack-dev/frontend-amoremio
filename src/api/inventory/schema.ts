@@ -25,6 +25,7 @@ export const StockItemSchema = z.object({
   stockValue: z.number(),
   reorderPoint: z.number().nullable().optional(),
   updatedAt: z.string().nullable().optional(),
+  productCoverThumbnailUrl: z.string().nullable().optional(),
 });
 
 export const StockMovementSchema = z.object({

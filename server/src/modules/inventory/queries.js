@@ -12,6 +12,7 @@ const STOCK_ITEM_FIELDS = `
   stockValue
   reorderPoint
   updatedAt
+  productCoverThumbnailUrl
 `;
 
 const STOCK_MOVEMENT_FIELDS = `
