@@ -21,12 +21,14 @@ export const GET_FINANCE_DASHBOARD_QUERY = `
       topProducts {
         idProduct
         productName
+        productCoverThumbnailUrl
         quantitySold
         revenue
       }
       productProfitability {
         idProduct
         productName
+        productCoverThumbnailUrl
         quantitySold
         revenue
         cost
@@ -38,6 +40,7 @@ export const GET_FINANCE_DASHBOARD_QUERY = `
       topProductionInputs {
         idProduct
         productName
+        productCoverThumbnailUrl
         quantityConsumed
         cost
       }

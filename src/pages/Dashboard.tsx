@@ -17,6 +17,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import StatCard from "@molecules/StatCard";
+import ProductNameCell from "@molecules/ProductNameCell";
 import Tabs from "@molecules/Tabs";
 import SectionCard from "@/components/organisms/SectionCard";
 import DataTable from "@/components/organisms/DataTable";
@@ -312,7 +313,16 @@ export default function Dashboard() {
                 getId={(row) => row.idProduct}
                 emptyMessage={emptyMessage}
                 columns={[
-                  { key: "productName", label: "Produto" },
+                  {
+                    key: "productName",
+                    label: "Produto",
+                    render: (row) => (
+                      <ProductNameCell
+                        name={row.productName}
+                        thumbnailUrl={row.productCoverThumbnailUrl}
+                      />
+                    ),
+                  },
                   {
                     key: "quantitySold",
                     label: "Qtd.",
@@ -435,7 +445,16 @@ export default function Dashboard() {
                     : "Nenhuma ordem de produção concluída no período."
                 }
                 columns={[
-                  { key: "productName", label: "Insumo" },
+                  {
+                    key: "productName",
+                    label: "Insumo",
+                    render: (row) => (
+                      <ProductNameCell
+                        name={row.productName}
+                        thumbnailUrl={row.productCoverThumbnailUrl}
+                      />
+                    ),
+                  },
                   {
                     key: "quantityConsumed",
                     label: "Qtd. consumida",
@@ -467,7 +486,16 @@ export default function Dashboard() {
                     : "Nenhum item de custo zero-receita vendido no período."
                 }
                 columns={[
-                  { key: "productName", label: "Item" },
+                  {
+                    key: "productName",
+                    label: "Item",
+                    render: (row) => (
+                      <ProductNameCell
+                        name={row.productName}
+                        thumbnailUrl={row.productCoverThumbnailUrl}
+                      />
+                    ),
+                  },
                   {
                     key: "quantitySold",
                     label: "Qtd.",
