@@ -22,6 +22,7 @@ export const FinanceDashboardSchema = z.object({
     .object({
       idProduct: z.string(),
       productName: z.string(),
+      productCoverThumbnailUrl: z.string().nullable().optional(),
       quantitySold: z.number(),
       revenue: z.number(),
     })
@@ -30,6 +31,7 @@ export const FinanceDashboardSchema = z.object({
     .object({
       idProduct: z.string(),
       productName: z.string(),
+      productCoverThumbnailUrl: z.string().nullable().optional(),
       quantitySold: z.number(),
       revenue: z.number(),
       cost: z.number(),
@@ -44,6 +46,7 @@ export const FinanceDashboardSchema = z.object({
     .object({
       idProduct: z.string(),
       productName: z.string(),
+      productCoverThumbnailUrl: z.string().nullable().optional(),
       quantityConsumed: z.number(),
       cost: z.number(),
     })
