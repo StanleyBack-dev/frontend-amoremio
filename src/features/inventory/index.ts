@@ -67,6 +67,8 @@ export const movementTypeLabel: Record<StockMovementType, string> = {
   SAIDA_VENDA: "Saída (venda)",
   SAIDA_PRODUCAO: "Saída (produção)",
   ENTRADA_PRODUCAO: "Entrada (produção)",
+  ESTORNO_SAIDA_PRODUCAO: "Estorno (insumo devolvido)",
+  ESTORNO_ENTRADA_PRODUCAO: "Estorno (produção retirada)",
   AJUSTE_POSITIVO: "Ajuste +",
   AJUSTE_NEGATIVO: "Ajuste −",
   PERDA: "Perda",
@@ -82,6 +84,10 @@ export const movementTypeTone: Record<
   ENTRADA_PRODUCAO: "info",
   SAIDA_VENDA: "brand",
   SAIDA_PRODUCAO: "gold",
+  // Both sides of a reversed production share one muted tone — the label
+  // already says which way the stock moved.
+  ESTORNO_SAIDA_PRODUCAO: "neutral",
+  ESTORNO_ENTRADA_PRODUCAO: "neutral",
   AJUSTE_POSITIVO: "warning",
   AJUSTE_NEGATIVO: "neutral",
   PERDA: "danger",

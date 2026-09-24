@@ -55,6 +55,9 @@ const DATE_ONLY_MOVEMENT_TYPES = new Set<StockMovement["type"]>([
   "SAIDA_VENDA",
   "SAIDA_PRODUCAO",
   "ENTRADA_PRODUCAO",
+  // Booked on the reversed order's production date.
+  "ESTORNO_SAIDA_PRODUCAO",
+  "ESTORNO_ENTRADA_PRODUCAO",
 ]);
 
 const brl = (value: number) =>

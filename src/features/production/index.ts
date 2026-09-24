@@ -12,6 +12,7 @@ import {
   removeProductionOrderItem as removeProductionOrderItemRequest,
   removeProductionOrderOutput as removeProductionOrderOutputRequest,
   removeProductionOrderOutputExtra as removeProductionOrderOutputExtraRequest,
+  reverseProductionOrder as reverseProductionOrderRequest,
   syncProductionOrderWithRecipe as syncProductionOrderWithRecipeRequest,
   updateProductionOrder as updateProductionOrderRequest,
 } from "@/api/production/methods";
@@ -195,6 +196,15 @@ export const cancelProductionOrder = async (
 ): Promise<ProductionOrder> =>
   parse(await cancelProductionOrderRequest(idStore, idProductionOrder));
 
+export const reverseProductionOrder = async (
+  idStore: string,
+  idProductionOrder: string,
+  reason: string,
+): Promise<ProductionOrder> =>
+  parse(
+    await reverseProductionOrderRequest(idStore, idProductionOrder, reason),
+  );
+
 export const syncProductionOrderWithRecipe = async (
   idStore: string,
   idProductionOrder: string,
@@ -206,6 +216,7 @@ export const productionOrderStatusLabel: Record<ProductionOrderStatus, string> =
     RASCUNHO: "Rascunho",
     CONCLUIDA: "Concluída",
     CANCELADA: "Cancelada",
+    ESTORNADA: "Estornada",
   };
 
 export type {

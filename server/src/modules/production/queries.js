@@ -78,6 +78,9 @@ const PRODUCTION_ORDER_FIELDS = `
   createdByUserId
   createdByUserName
   concludedAt
+  reversedAt
+  reversedByUserName
+  reversalReason
   createdAt
   updatedAt
   items {
@@ -230,6 +233,11 @@ export const CANCEL_PRODUCTION_ORDER_MUTATION = orderMutation(
   "CancelProductionOrder",
   "cancelProductionOrder",
   "ProductionOrderScopeInputDto",
+);
+export const REVERSE_PRODUCTION_ORDER_MUTATION = orderMutation(
+  "ReverseProductionOrder",
+  "reverseProductionOrder",
+  "ReverseProductionOrderInputDto",
 );
 export const DUPLICATE_PRODUCTION_ORDER_MUTATION = orderMutation(
   "DuplicateProductionOrder",

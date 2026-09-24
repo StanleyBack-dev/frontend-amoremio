@@ -21,6 +21,7 @@ import {
   REMOVE_PRODUCTION_ORDER_OUTPUT_EXTRA_MUTATION,
   REMOVE_PRODUCTION_ORDER_OUTPUT_MUTATION,
   REMOVE_RECIPE_ITEM_MUTATION,
+  REVERSE_PRODUCTION_ORDER_MUTATION,
   SYNC_PRODUCTION_ORDER_WITH_RECIPE_MUTATION,
   UPDATE_PRODUCTION_ORDER_MUTATION,
   UPDATE_RECIPE_ITEM_MUTATION,
@@ -160,6 +161,14 @@ export const cancelProductionOrder = (input, ctx, rid) =>
   runMutation(
     CANCEL_PRODUCTION_ORDER_MUTATION,
     "cancelProductionOrder",
+    input,
+    ctx,
+    rid,
+  );
+export const reverseProductionOrder = (input, ctx, rid) =>
+  runMutation(
+    REVERSE_PRODUCTION_ORDER_MUTATION,
+    "reverseProductionOrder",
     input,
     ctx,
     rid,

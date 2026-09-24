@@ -4,6 +4,7 @@ import Button from "@atoms/Button";
 import NumberInput from "@atoms/NumberInput";
 import CurrencyInput from "@atoms/CurrencyInput";
 import Input from "@atoms/Input";
+import Textarea from "@atoms/Textarea";
 import Select from "@atoms/Select";
 import Badge from "@atoms/Badge";
 import ConfirmDialog from "@/components/molecules/ConfirmDialog";
@@ -48,6 +49,7 @@ import {
   removeProductionOrderItem,
   removeProductionOrderOutput,
   removeProductionOrderOutputExtra,
+  reverseProductionOrder,
   syncProductionOrderWithRecipe,
   updateProductionOrder,
 } from "@/features/production";
@@ -76,11 +78,15 @@ const unitBrl = (value: number) => {
   return brl(value);
 };
 
-const statusTone: Record<string, "warning" | "success" | "danger"> = {
-  RASCUNHO: "warning",
-  CONCLUIDA: "success",
-  CANCELADA: "danger",
-};
+const statusTone: Record<string, "warning" | "success" | "danger" | "neutral"> =
+  {
+    RASCUNHO: "warning",
+    CONCLUIDA: "success",
+    CANCELADA: "danger",
+    ESTORNADA: "neutral",
+  };
+
+const REVERSAL_REASON_MAX = 500;
 
 function round4(value: number): number {
   return Math.round(value * 10000) / 10000;
@@ -90,6 +96,7 @@ const emptyFilters = { recipe: "", status: "", createdBy: "" };
 
 type PendingConfirm =
   | { kind: "cancel" }
+  | { kind: "reverse" }
   | { kind: "sync" }
   | { kind: "duplicate"; order: ProductionOrder }
   | null;
@@ -180,6 +187,7 @@ export default function Production() {
   const [expandedOutputId, setExpandedOutputId] = useState<string | null>(null);
 
   const [confirm, setConfirm] = useState<PendingConfirm>(null);
+  const [reversalReason, setReversalReason] = useState("");
   const [confirmBusy, setConfirmBusy] = useState(false);
   // Synchronous lock — `confirmBusy` state updates too late to block a fast
   // double-click on the confirm button.
@@ -593,6 +601,44 @@ export default function Production() {
     }
   }
 
+  // Undoes a completed order: inputs go back to stock, finished goods come
+  // back out. Returns whether it went through so the dialog (and the typed
+  // reason) stays open on failure.
+  async function handleReverse(): Promise<boolean> {
+    if (!activeStoreId || !open || open.status !== "CONCLUIDA") return false;
+    const reason = reversalReason.trim();
+    if (!reason) {
+      showError(
+        "Informe o motivo",
+        "Diga por que a produção está sendo estornada.",
+      );
+      return false;
+    }
+    setBusy(true);
+    try {
+      const reversed = await reverseProductionOrder(
+        activeStoreId,
+        open.idProductionOrder,
+        reason,
+      );
+      showSuccess(
+        "Produção estornada",
+        "Insumos devolvidos e produtos retirados do estoque.",
+      );
+      setOpen(reversed);
+      await load();
+      return true;
+    } catch (error) {
+      showError(
+        "Erro ao estornar",
+        error instanceof Error ? error.message : "Tente novamente.",
+      );
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
   // Re-pulls the recipe's current items into this draft — for when the
   // recipe was edited (ingredient added/removed/quantity changed) after this
   // order was created, and the change never reached the cost preview here.
@@ -653,7 +699,9 @@ export default function Production() {
     confirmLock.current = true;
     setConfirmBusy(true);
     try {
-      if (confirm.kind === "cancel") {
+      if (confirm.kind === "reverse") {
+        if (!(await handleReverse())) return;
+      } else if (confirm.kind === "cancel") {
         await handleCancel();
       } else if (confirm.kind === "sync") {
         await handleSync();
@@ -1065,6 +1113,7 @@ export default function Production() {
               <option value="RASCUNHO">Rascunho</option>
               <option value="CONCLUIDA">Concluída</option>
               <option value="CANCELADA">Cancelada</option>
+              <option value="ESTORNADA">Estornada</option>
             </Select>
 
             <Select
@@ -1286,6 +1335,26 @@ export default function Production() {
       >
         {open && preview && (
           <div className="flex flex-col gap-5">
+            {open.status === "ESTORNADA" && (
+              <div className="rounded-md border border-err-border bg-err-bg px-4 py-3 text-[13px] text-err-fg">
+                <p className="font-semibold">
+                  Produção estornada
+                  {open.reversedAt
+                    ? ` em ${formatDateTimeDisplay(open.reversedAt)}`
+                    : ""}
+                  {open.reversedByUserName
+                    ? ` por ${open.reversedByUserName}`
+                    : ""}
+                </p>
+                {open.reversalReason && (
+                  <p className="mt-1">Motivo: {open.reversalReason}</p>
+                )}
+                <p className="mt-1">
+                  Os insumos voltaram ao estoque e os produtos gerados foram
+                  retirados. Os custos abaixo ficam só como registro.
+                </p>
+              </div>
+            )}
             <SectionCard
               title="Dados da produção"
               action={
@@ -1618,6 +1687,19 @@ export default function Production() {
                       Excluir produção
                     </Button>
                   </div>
+                ) : open.status === "CONCLUIDA" && canComplete ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={busy}
+                    className="!text-err-fg hover:!bg-err-bg"
+                    onClick={() => {
+                      setReversalReason("");
+                      setConfirm({ kind: "reverse" });
+                    }}
+                  >
+                    Estornar produção
+                  </Button>
                 ) : undefined
               }
             >
@@ -1774,26 +1856,56 @@ export default function Production() {
       <ConfirmDialog
         open={confirm !== null}
         title={
-          confirm?.kind === "cancel"
-            ? "Excluir produção"
-            : confirm?.kind === "duplicate"
-              ? "Duplicar produção"
-              : "Sincronizar com a receita"
+          confirm?.kind === "reverse"
+            ? "Estornar produção"
+            : confirm?.kind === "cancel"
+              ? "Excluir produção"
+              : confirm?.kind === "duplicate"
+                ? "Duplicar produção"
+                : "Sincronizar com a receita"
         }
         description={
-          confirm?.kind === "cancel"
-            ? "A ordem será cancelada e não poderá mais ser editada. Nenhum estoque foi movimentado ainda."
-            : confirm?.kind === "duplicate"
-              ? `Isso cria uma nova produção em rascunho de "${confirm.order.recipeName}" com os mesmos lotes, mão de obra e saídas (+ extras) de "${formatDateOnlyDisplay(confirm.order.productionDate)}" — é só ajustar o que mudar e concluir.`
-              : "Os insumos desta ordem serão recalculados a partir da receita como ela está agora — ingredientes adicionados, removidos ou com quantidade alterada na receita passam a valer aqui. Mão de obra e outros custos não são afetados."
+          confirm?.kind === "reverse" ? (
+            <div className="flex flex-col gap-3">
+              <p>
+                Desfaz esta produção: os insumos consumidos voltam ao estoque e
+                os produtos gerados são retirados. Só é possível se tudo o que
+                foi produzido ainda estiver em estoque. A ordem fica registrada
+                como estornada e não pode ser reaberta — para corrigir,
+                duplique-a e conclua de novo com os dados certos.
+              </p>
+              <Textarea
+                label="Motivo do estorno"
+                required
+                rows={3}
+                maxLength={REVERSAL_REASON_MAX}
+                value={reversalReason}
+                disabled={confirmBusy}
+                onChange={(e) => setReversalReason(e.target.value)}
+                placeholder="Ex.: lançado Limão, mas foi Maracujá"
+              />
+            </div>
+          ) : confirm?.kind === "cancel" ? (
+            "A ordem será cancelada e não poderá mais ser editada. Nenhum estoque foi movimentado ainda."
+          ) : confirm?.kind === "duplicate" ? (
+            `Isso cria uma nova produção em rascunho de "${confirm.order.recipeName}" com os mesmos lotes, mão de obra e saídas (+ extras) de "${formatDateOnlyDisplay(confirm.order.productionDate)}" — é só ajustar o que mudar e concluir.`
+          ) : (
+            "Os insumos desta ordem serão recalculados a partir da receita como ela está agora — ingredientes adicionados, removidos ou com quantidade alterada na receita passam a valer aqui. Mão de obra e outros custos não são afetados."
+          )
         }
-        variant={confirm?.kind === "cancel" ? "danger" : "default"}
+        variant={
+          confirm?.kind === "cancel" || confirm?.kind === "reverse"
+            ? "danger"
+            : "default"
+        }
         confirmLabel={
-          confirm?.kind === "cancel"
-            ? "Excluir"
-            : confirm?.kind === "duplicate"
-              ? "Duplicar"
-              : "Sincronizar"
+          confirm?.kind === "reverse"
+            ? "Estornar"
+            : confirm?.kind === "cancel"
+              ? "Excluir"
+              : confirm?.kind === "duplicate"
+                ? "Duplicar"
+                : "Sincronizar"
         }
         cancelLabel="Voltar"
         loading={confirmBusy}

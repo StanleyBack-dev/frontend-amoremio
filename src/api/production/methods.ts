@@ -214,6 +214,22 @@ export async function cancelProductionOrder(
   }
 }
 
+export async function reverseProductionOrder(
+  idStore: string,
+  idProductionOrder: string,
+  reason: string,
+): Promise<ProductionOrder> {
+  try {
+    const response = await apiHttp.post<ProductionOrder>(
+      `/production-orders/${idProductionOrder}/reverse`,
+      { idStore, reason },
+    );
+    return response.data;
+  } catch (error) {
+    throw fail(error, "Não foi possível estornar a ordem de produção.");
+  }
+}
+
 export async function duplicateProductionOrder(
   idStore: string,
   idProductionOrder: string,
