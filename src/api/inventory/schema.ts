@@ -6,6 +6,8 @@ export const StockMovementTypeSchema = z.enum([
   "SAIDA_VENDA",
   "SAIDA_PRODUCAO",
   "ENTRADA_PRODUCAO",
+  "ESTORNO_SAIDA_PRODUCAO",
+  "ESTORNO_ENTRADA_PRODUCAO",
   "AJUSTE_POSITIVO",
   "AJUSTE_NEGATIVO",
   "PERDA",

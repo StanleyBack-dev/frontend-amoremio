@@ -22,6 +22,7 @@ import {
   removeProductionOrderOutput,
   removeProductionOrderOutputExtra,
   removeRecipeItem,
+  reverseProductionOrder,
   syncProductionOrderWithRecipe,
   updateProductionOrder,
   updateRecipe,
@@ -326,6 +327,21 @@ productionOrdersRouter.post(
       {
         idStore: req.body?.idStore,
         idProductionOrder: req.params.idProductionOrder,
+      },
+      getAuthContext(req),
+      req.requestId,
+    ),
+  ),
+);
+
+productionOrdersRouter.post(
+  "/:idProductionOrder/reverse",
+  handle((req) =>
+    reverseProductionOrder(
+      {
+        idStore: req.body?.idStore,
+        idProductionOrder: req.params.idProductionOrder,
+        reason: req.body?.reason,
       },
       getAuthContext(req),
       req.requestId,

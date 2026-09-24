@@ -5,6 +5,7 @@ export const ProductionOrderStatusSchema = z.enum([
   "RASCUNHO",
   "CONCLUIDA",
   "CANCELADA",
+  "ESTORNADA",
 ]);
 
 export const ProductionOrderItemSchema = z.object({
@@ -56,6 +57,9 @@ export const ProductionOrderSchema = z.object({
   createdByUserId: z.string(),
   createdByUserName: z.string().nullable().optional(),
   concludedAt: z.string().nullable().optional(),
+  reversedAt: z.string().nullable().optional(),
+  reversedByUserName: z.string().nullable().optional(),
+  reversalReason: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   items: ProductionOrderItemSchema.array(),
